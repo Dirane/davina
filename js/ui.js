@@ -70,9 +70,21 @@ function plural(n, one, many) {
 
 /* ---------- Reading (Today and Past day) ---------- */
 
+/** "Amara is 3 weeks old" / "Amara was 5 days old" / "The day Amara was born". */
+function ageLine(birthDate, date, name, past) {
+  const a = D.age(birthDate, date);
+  if (!a) return null;
+  const who = D.cleanName(name) || 'Your little one';
+  if (a.days === 0) {
+    return h('p', { class: 'age' }, past ? 'The day ' : '', h('strong', { text: who }), past ? ' was born' : ' was born today');
+  }
+  const tail = !past && a.milestone ? ' today' : '';
+  return h('p', { class: 'age' }, h('strong', { text: who }), ` ${past ? 'was' : 'is'} ${a.text}${tail}`);
+}
+
 /**
- * model: { mode: 'today'|'past', n, date, entry, name, status, read,
- *          missed (count, today only), justRead }
+ * model: { mode: 'today'|'past', n, date, entry, name, birthDate, status, read,
+ *          missed, earlier (counts, today only), justRead }
  * status is a day state from NBDays.dayState.
  */
 export function renderReading(container, model, { onMarkRead }) {
@@ -93,13 +105,16 @@ export function renderReading(container, model, { onMarkRead }) {
     h('h1', { class: 'day-title', id: headingId, tabindex: '-1' },
       `Day ${index} `, h('span', { class: 'of', text: `of ${D.PLAN_LENGTH}` })),
     cycle > 1 ? h('p', { class: 'cycle', text: `Year ${cycle} · Day ${n} overall` }) : null,
+    ageLine(model.birthDate, date, name, mode === 'past'),
     h('p', { class: 'theme', text: entry.theme }),
   ));
 
-  if (mode === 'today' && model.missed > 0) {
-    nodes.push(h('a', { class: 'banner', href: '#journey' },
-      h('span', { text: `You have ${plural(model.missed, 'day', 'days')} to catch up` }),
-      icon('i-arrow')));
+  if (mode === 'today' && (model.missed > 0 || model.earlier > 0)) {
+    const text = model.missed > 0
+      ? `You have ${plural(model.missed, 'day', 'days')} to catch up`
+      : `${plural(model.earlier, 'earlier day', 'earlier days')} to read`;
+    const cls = model.missed > 0 ? 'banner' : 'banner banner--soft';
+    nodes.push(h('a', { class: cls, href: '#journey' }, h('span', { text }), icon('i-arrow')));
   }
 
   nodes.push(h('article', { class: 'card verse-card', 'aria-label': 'Verse' },
@@ -115,7 +130,7 @@ export function renderReading(container, model, { onMarkRead }) {
 
   const action = h('div', { class: 'read-action' });
   const justRead = model.justRead === date;
-  if (status === 'today' || status === 'missed') {
+  if (status === 'today' || status === 'missed' || status === 'earlier') {
     action.append(h('button', {
       class: 'btn btn-primary',
       type: 'button',
@@ -123,7 +138,10 @@ export function renderReading(container, model, { onMarkRead }) {
       onclick: (e) => { e.currentTarget.disabled = true; onMarkRead(date); },
     }, 'Mark as read'));
   } else if (status === 'read') {
-    const label = mode === 'today' ? 'Read today' : 'Read on the day';
+    // Days from before joining can be read any time and still count as read.
+    const readDate = read && D.localDateOf(read.readAt);
+    let label = mode === 'today' ? 'Read today' : 'Read on the day';
+    if (mode === 'past' && readDate && readDate > date) label = justRead ? 'Read' : `Read on ${formatReadAt(read.readAt)}`;
     action.append(readState(label, justRead, false, read));
   } else if (status === 'late') {
     const label = justRead ? 'Caught up' : `Read later, on ${formatReadAt(read.readAt)}`;
@@ -146,13 +164,18 @@ function readState(label, justRead, late, read) {
 
 /* ---------- First year complete ---------- */
 
-export function renderComplete(container, { name, summary }, { onStartAgain, onKeepReading }) {
+export function renderComplete(container, { name, summary, birthday }, { onStartAgain, onKeepReading }) {
   container.setAttribute('aria-labelledby', 'complete-heading');
   const who = D.cleanName(name) || D.NAME_FALLBACK;
+  // When Day 1 was the birthday, Day 366 is the first birthday.
+  const title = birthday ? `Happy first birthday, ${who}!` : 'First year complete';
+  const lede = birthday
+    ? `A whole year of verses and prayers, from the day ${who} was born until today. Thank you for every one.`
+    : `A whole year of verses and prayers for ${who}. Thank you for every one.`;
   container.replaceChildren(h('div', { class: 'stack complete' },
     icon('i-sprout', 'welcome-mark'),
-    h('h1', { class: 'screen-title', id: 'complete-heading', tabindex: '-1', text: 'First year complete' }),
-    h('p', { class: 'lede', text: `A whole year of verses and prayers for ${who}. Thank you for every one.` }),
+    h('h1', { class: 'screen-title', id: 'complete-heading', tabindex: '-1', text: title }),
+    h('p', { class: 'lede', text: lede }),
     h('div', { class: 'totals' },
       total(summary.read, summary.read === 1 ? 'day read' : 'days read'),
       total(summary.onTime, 'on the day'),
@@ -162,7 +185,7 @@ export function renderComplete(container, { name, summary }, { onStartAgain, onK
       h('button', { class: 'btn btn-primary', type: 'button', onclick: onKeepReading }, 'Keep reading'),
       h('p', { class: 'hint', text: 'The plan repeats from Day 1 and your history is kept.' }),
       h('button', { class: 'btn btn-secondary', type: 'button', onclick: onStartAgain }, 'Start again from Day 1'),
-      h('p', { class: 'hint', text: 'Starts a fresh year today. Keeps the name, clears the history.' }),
+      h('p', { class: 'hint', text: 'Starts a fresh year today. Keeps the name and birthday, clears the history.' }),
     ),
   ));
 }
@@ -177,6 +200,7 @@ const STATE_LABEL = {
   read: 'read',
   late: 'read late',
   missed: 'missed',
+  earlier: 'not read yet',
   today: 'today, not read yet',
 };
 
@@ -186,12 +210,16 @@ function weekdayInitials() {
   return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2023, 0, 1 + i, 12)));
 }
 
-export function renderJourney({ summaryEl, monthsEl }, { startDate, today, reads, summary }) {
-  summaryEl.replaceChildren(
+export function renderJourney({ headingEl, summaryEl, monthsEl, legendEarlierEl }, { name, startDate, joined, today, reads, summary }) {
+  headingEl.textContent = `${D.possessive(name)} journey`;
+  const parts = [
     'Read ', h('strong', { text: String(summary.read) }),
     ' · Missed ', h('strong', { text: String(summary.missed) }),
     ' · Current streak ', h('strong', { text: plural(summary.streak, 'day', 'days') }),
-  );
+  ];
+  if (summary.earlier > 0) parts.push(' · Not yet read ', h('strong', { text: String(summary.earlier) }));
+  summaryEl.replaceChildren(...parts);
+  legendEarlierEl.hidden = summary.earlier === 0;
 
   const initials = weekdayInitials();
   const months = D.monthsForJourney(startDate, today).reverse(); // newest month first
@@ -204,7 +232,7 @@ export function renderJourney({ summaryEl, monthsEl }, { startDate, today, reads
     for (let i = 0; i < month.lead; i++) list.append(h('li', { 'aria-hidden': 'true' }));
     for (const date of month.dates) {
       const n = D.dayNumber(startDate, date);
-      const status = D.dayState(date, today, reads.get(date));
+      const status = D.dayState(date, today, reads.get(date), joined);
       const isToday = date === today;
       const cls = ['day', `day--${status === 'today' ? 'today' : status}`];
       if (isToday && status !== 'today') cls.push('day--today');

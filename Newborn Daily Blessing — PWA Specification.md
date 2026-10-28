@@ -25,8 +25,8 @@ Newborn Daily Blessing is a static, installable web app that gives a parent one 
 | Decision | Choice | Why |
 | --- | --- | --- |
 | Audience | A parent of a newborn | Agreed with the owner |
-| Personalisation | Parent enters the baby's name once, on first open | Prayers read as written for this child |
-| Day 1 | The date the parent completes setup | Only the name is asked; no birth date needed |
+| Personalisation | Parent enters the baby's name and birthday once, on first open; the name appears in the header, titles, age line and prayers | The app reads as written for this child |
+| Day 1 | The baby's birthday (within the last 12 months) | Every day of the first year can be read, including the days before the app was set up |
 | Length | 365 days, then a "first year complete" screen | Matches the baby's first year |
 | Bible text | World English Bible (WEB) | Public domain, modern English; KJV is the fallback if preferred |
 | Language | English only | Agreed with the owner |
@@ -43,13 +43,14 @@ The app has five screens and a bottom bar with two tabs: **Today** and **Journey
 ### 1. Welcome (first open only)
 
 - One sentence: "A verse and a prayer for your little one, every day of their first year."
-- One field: **Baby's name** (required, 1–30 characters, trimmed).
+- **Baby's name** (required, 1–30 characters, trimmed).
+- **Baby's birthday** (required; not in the future; within the last 12 months, since the plan covers the first year).
 - Optional: **Daily reminder time**, default 07:00.
-- Button **Begin**. Saves the profile, sets Day 1 to today, then asks for notification permission with a short explanation first (never a cold browser prompt).
+- Button **Begin**. Saves the profile, sets Day 1 to the birthday, then asks for notification permission with a short explanation first (never a cold browser prompt).
 
 ### 2. Today
 
-- Header: "Day 12 of 365" and today's date.
+- Header: "Day 12 of 365", today's date and the baby's age ("Amara is 3 weeks old"). The app header reads "Amara's Daily Blessing".
 - Theme label for the day, e.g. "Peaceful sleep".
 - Verse card: verse text in large serif type, reference underneath ("Psalm 4:8, WEB").
 - Prayer card: the prayer with the baby's name filled in, ending in "Amen."
@@ -59,7 +60,7 @@ The app has five screens and a bottom bar with two tabs: **Today** and **Journey
 ### 3. Journey (missed days)
 
 - Summary line: "Read 40 · Missed 3 · Current streak 6 days".
-- A month-by-month grid of day circles, Day 1 to today. States: read (filled accent), read late (outlined accent), missed (soft warning tint), today (ring), future (not shown).
+- A month-by-month grid of day circles, Day 1 to today. States: read (filled accent), read late (outlined accent), missed (soft warning tint), not yet read (dashed outline, days before setup), today (ring), future (not shown). Heading: "Amara's journey".
 - Tapping any past day opens that day's reading.
 
 ### 4. Past day
@@ -78,7 +79,7 @@ The app has five screens and a bottom bar with two tabs: **Today** and **Journey
 
 ### After Day 365
 
-Today shows a "First year complete" screen with totals, and two choices: **Start again from Day 1** (keeps nothing but the name) or **Keep reading** (the plan repeats from Day 1, history kept).
+Today shows a "Happy first birthday, Amara!" screen with totals ("First year complete" after a restart), and two choices: **Start again from Day 1** (a fresh plan from today; keeps only the name and birthday) or **Keep reading** (the plan repeats from Day 1, history kept).
 
 ## Content: verses and prayers
 
@@ -168,7 +169,8 @@ A day is missed when its date has passed and it was never marked read; reading i
 ### Day numbering
 
 - Dates are the device's local calendar dates as `YYYY-MM-DD` strings, never timestamps, so time zones and daylight saving can't shift a day.
-- `dayNumber(date) = days between startDate and date + 1`. Day 1 is the setup date.
+- `dayNumber(date) = days between startDate and date + 1`. Day 1 (`startDate`) is the birthday, or the day of "Start again".
+- Days between the birthday and the setup date (`joinedDate`) were never due: unread they are "not yet read", not missed, and reading them counts as read, not read late. The streak counts from `joinedDate`.
 - Past Day 365 the plan content repeats: content index = `((dayNumber - 1) mod 365) + 1`.
 
 ### Day states
@@ -199,7 +201,7 @@ Everything the parent creates lives in one IndexedDB database on the device, `ne
 
 | Store | Key | Fields |
 | --- | --- | --- |
-| `profile` | `"me"` (single record) | `name`, `startDate` (YYYY-MM-DD), `reminderTime` (HH:MM), `createdAt` (ISO), `lastSeenDate` (YYYY-MM-DD) |
+| `profile` | `"me"` (single record) | `name`, `birthDate`, `startDate` (Day 1), `joinedDate` (setup day), `reminderTime` (HH:MM), `createdAt` (ISO), `lastSeenDate` (dates are YYYY-MM-DD) |
 | `reads` | `date` (YYYY-MM-DD) | `date`, `dayNumber`, `readAt` (ISO timestamp) |
 
 Only days that were read get a record; missed days are computed, not stored.
@@ -337,7 +339,7 @@ Routing uses the URL hash (`#today`, `#journey`, `#day/12`, `#settings`) so GitH
 
 ### Acceptance criteria
 
-1. On a fresh phone, the parent can open the link, enter a name and see Day 1 in under 30 seconds.
+1. On a fresh phone, the parent can open the link, enter a name and birthday, and see today's reading in under 30 seconds.
 2. The app installs from Chrome on Android and desktop, and via Add to Home Screen on iPhone, and opens full-screen with its own icon.
 3. With the device in airplane mode, an installed app opens and shows today's reading.
 4. Every prayer shows the baby's name; renaming updates all prayers.

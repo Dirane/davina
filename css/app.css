@@ -168,7 +168,9 @@ a { color: var(--accent); text-underline-offset: 3px; }
   font-size: 16px;
   margin-right: auto;
 }
-.brand-mark { color: var(--accent); width: 22px; height: 22px; }
+.brand-mark { color: var(--accent); width: 22px; height: 22px; flex: none; }
+.brand { min-width: 0; }
+.brand-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .icon-btn {
   display: inline-grid;
@@ -350,6 +352,8 @@ input[aria-invalid="true"] { border-color: var(--danger); }
 .day-title { font-size: 28px; line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; }
 .day-title .of { color: var(--muted); font-weight: 400; }
 .theme { font-size: 15px; font-weight: 600; color: var(--accent); }
+.age { font-size: 15px; color: var(--muted); }
+.age strong { color: var(--text); font-weight: 600; }
 .cycle { font-size: 14px; color: var(--muted); }
 
 .back-link {
@@ -381,6 +385,7 @@ input[aria-invalid="true"] { border-color: var(--danger); }
   text-decoration: none;
 }
 .banner .icon { width: 20px; height: 20px; }
+.banner--soft { background: var(--accent-soft); color: var(--accent-text); }
 
 .verse { margin: 0; font-family: var(--font-serif); font-size: 22px; line-height: 1.5; }
 .verse p { margin: 0; }
@@ -480,6 +485,8 @@ input[aria-invalid="true"] { border-color: var(--danger); }
 .day--late { border-color: var(--accent); color: var(--accent); }
 .day--late .mark { color: var(--accent); }
 .day--missed { background: var(--missed); color: var(--text); }
+/* Before the parent joined: not due, so neutral rather than "missed". */
+.day--earlier { border: 1px dashed var(--control-border); color: var(--text); }
 .day--missed .mark-dot { display: grid; place-items: center; }
 .day--missed .mark-dot::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--danger); }
 .legend .day--missed .mark-dot { background: var(--danger); border-radius: 50%; }

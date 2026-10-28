@@ -102,18 +102,25 @@
   }
 
   /**
-   * State of one date: 'future' | 'today' (unread) | 'read' | 'late' | 'missed'.
+   * State of one date: 'future' | 'today' (unread) | 'read' | 'late' |
+   * 'missed' | 'earlier'.
    * `read` is the reads-store record for that date, or undefined.
+   * `joined` is the date the parent set the app up. Days before it (from the
+   * birthday onwards) were never "due", so unread ones are 'earlier', not
+   * 'missed', and reading them later counts as 'read', not 'late'.
    * A read counts as on time when it happened on (or, with a clock that went
    * backwards, before) the date itself.
    */
-  function dayState(date, today, read) {
+  function dayState(date, today, read, joined) {
     if (date > today) return 'future';
+    const beforeJoining = !!joined && date < joined;
     if (read && read.readAt) {
+      if (beforeJoining) return 'read';
       const readDate = localDateOf(read.readAt);
       return readDate && readDate > date ? 'late' : 'read';
     }
-    return date === today ? 'today' : 'missed';
+    if (date === today) return 'today';
+    return beforeJoining ? 'earlier' : 'missed';
   }
 
   /** Build a Map date -> read record from an array of records. */
@@ -125,32 +132,64 @@
 
   /**
    * Totals from Day 1 to today.
-   * read: on time + late. missed: past days still unread. streak: consecutive
-   * on-time days ending today (or yesterday if today is still unread).
+   * read: on time + late. missed: days since joining still unread.
+   * earlier: days before joining still unread. streak: consecutive on-time
+   * days since joining, ending today (or yesterday if today is still unread).
    */
-  function summarize(startDate, today, readsMap) {
-    let read = 0, late = 0, missed = 0;
+  function summarize(startDate, today, readsMap, joined) {
+    let read = 0, late = 0, missed = 0, earlier = 0;
     const total = Math.max(0, dayNumber(startDate, today));
     for (let i = 0; i < total; i++) {
       const date = addDays(startDate, i);
-      const s = dayState(date, today, readsMap.get(date));
+      const s = dayState(date, today, readsMap.get(date), joined);
       if (s === 'read') read++;
       else if (s === 'late') late++;
       else if (s === 'missed') missed++;
+      else if (s === 'earlier') earlier++;
     }
-    return { read: read + late, onTime: read, late, missed, streak: streak(startDate, today, readsMap), days: total };
+    return {
+      read: read + late, onTime: read, late, missed, earlier,
+      streak: streak(startDate, today, readsMap, joined), days: total,
+    };
   }
 
-  function streak(startDate, today, readsMap) {
+  function streak(startDate, today, readsMap, joined) {
+    const from = joined && joined > startDate ? joined : startDate;
     let d = today;
-    const todayState = dayState(today, today, readsMap.get(today));
-    if (todayState !== 'read') d = addDays(today, -1);
+    if (dayState(today, today, readsMap.get(today), joined) !== 'read') d = addDays(today, -1);
     let count = 0;
-    while (d >= startDate && dayState(d, today, readsMap.get(d)) === 'read') {
+    while (d >= from && dayState(d, today, readsMap.get(d), joined) === 'read') {
       count++;
       d = addDays(d, -1);
     }
     return count;
+  }
+
+  /**
+   * How old the baby is on `date`, as a short phrase:
+   * 'born today', '5 days old', '3 weeks old', '4 months old', '1 year old'.
+   * `milestone` is true on a whole week (under 2 months) or a monthly birthday.
+   */
+  function age(birthDate, date) {
+    if (!isDateString(birthDate) || !isDateString(date)) return null;
+    const days = daysBetween(birthDate, date);
+    if (days < 0) return null;
+    const [by, bm, bd] = birthDate.split('-').map(Number);
+    const [y, m, d] = date.split('-').map(Number);
+    const months = (y - by) * 12 + (m - bm) - (d < bd ? 1 : 0);
+    const unit = (n, word) => `${n} ${word}${n === 1 ? '' : 's'} old`;
+    if (days === 0) return { days, text: 'born today', milestone: true };
+    if (days < 14) return { days, text: unit(days, 'day'), milestone: false };
+    if (months < 2) return { days, text: unit(Math.floor(days / 7), 'week'), milestone: days % 7 === 0 };
+    if (months === 12 && d === bd) return { days, text: '1 year old', milestone: true };
+    if (months < 24) return { days, text: unit(months, 'month'), milestone: d === bd };
+    return { days, text: unit(Math.floor(months / 12), 'year'), milestone: d === bd && m === bm };
+  }
+
+  /** "Amara’s" — possessive used in headings. */
+  function possessive(name) {
+    const n = cleanName(name);
+    return n ? `${n}’s` : 'Your';
   }
 
   /**
@@ -210,7 +249,7 @@
     PLAN_LENGTH, NAME_MAX, NAME_FALLBACK,
     toDateString, isDateString, isTimeString, daysBetween, addDays, weekday,
     dayNumber, dateForDay, contentIndex, cycleNumber, effectiveToday,
-    localDateOf, dayState, indexReads, summarize, streak, monthsForJourney,
+    localDateOf, dayState, indexReads, summarize, streak, monthsForJourney, age, possessive,
     minutesOf, isReminderDue, cleanName, fillName, notificationText,
   });
 })(typeof globalThis !== 'undefined' ? globalThis : self);

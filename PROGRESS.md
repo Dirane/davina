@@ -58,3 +58,21 @@ SCRATCH=/private/tmp/claude-501/-Users-apple-Documents-general-ngalas-Davina/4d8
 - Verse display rules (tools/web.js): Psalm titles stripped exactly (tools/psalm-titles.json
   from WEB USFM), "Selah" dropped, first letter capitalised, trailing , ; : → "…",
   quotation marks cut by the passage boundary are completed. Wording never changed.
+
+## Change 2 (2026-10-28): Day 1 = baby's birthday + personalisation  [DONE, verified in browser]
+Branch: build-pwa (pushed; not merged to main yet).
+Plan:
+- [x] Profile gets `birthDate` and `joinedDate` (setup date). Day 1 = startDate = birthDate.
+      Old profiles/backups: birthDate ← startDate, joinedDate ← startDate.
+- [x] New day state 'earlier': unread day before joinedDate (neutral, not "missed").
+      Reading an earlier day counts as 'read'. Streak only counts from joinedDate.
+- [x] Welcome asks birthday (max today, min today−364). Settings can edit birthday;
+      if startDate === birthDate the plan moves with it (reads before new start removed after confirm).
+      "Start again" keeps name + birthDate, startDate = joinedDate = today.
+- [x] Personalise: header "<name>’s Daily Blessing", titles, age line on Today/Past day,
+      "<name>’s journey", onboarding copy, complete screen "Happy first birthday, <name>"
+      when startDate === birthDate.
+- [x] Update spec doc + README; tests; browser check; bump CACHE_VERSION v2, APP_VERSION 1.1.0.
+Notes: first birthday shows "1 year old today"; banner for earlier-only days is the calm
+green style (warm tint stays for real missed days). Old profiles without birthDate work
+(fallback to startDate). CACHE_VERSION blessing-v2, APP_VERSION 1.1.0.

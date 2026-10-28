@@ -9,7 +9,7 @@ import * as UI from './ui.js';
 
 const D = globalThis.NBDays;
 const DB = globalThis.NBDB;
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 const TICK_MS = 30 * 1000;
 // Identifies this tab, so it can ignore its own broadcasts.
 const TAB_ID = Math.random().toString(36).slice(2);
@@ -75,6 +75,19 @@ async function updateToday() {
 
 const todayNumber = () => D.dayNumber(state.profile.startDate, state.today);
 const isComplete = () => todayNumber() > D.PLAN_LENGTH && !state.profile.continued;
+// Profiles from before birthdays were asked: Day 1 was the setup day.
+const birthDate = () => state.profile.birthDate || state.profile.startDate;
+const joinedDate = () => state.profile.joinedDate || state.profile.startDate;
+// True while Day 1 is the birthday (not after "Start again").
+const followsBirthday = () => state.profile.startDate === birthDate();
+const summary = () => D.summarize(state.profile.startDate, state.today, state.reads, joinedDate());
+const stateOf = (date) => D.dayState(date, state.today, state.reads.get(date), joinedDate());
+const appTitle = () => (state.profile ? `${D.possessive(state.profile.name)} Daily Blessing` : 'Newborn Daily Blessing');
+
+/** Put the baby's name in the header and the page title. */
+function personalise() {
+  $('brand-name').textContent = state.profile ? appTitle() : 'Daily Blessing';
+}
 const todayUnread = () => !state.reads.has(state.today);
 
 /* ====================================================================== */
@@ -130,7 +143,8 @@ function render({ focus = false } = {}) {
   const changed = route.name !== state.route.name || route.n !== state.route.n;
   state.route = route;
   showScreen(route.name === 'day' ? 'day' : route.name);
-  document.title = `${TITLES[route.name]} · Newborn Daily Blessing`;
+  personalise();
+  document.title = `${TITLES[route.name]} · ${appTitle()}`;
 
   if (route.name === 'today') renderToday();
   else if (route.name === 'journey') renderJourney();
@@ -150,21 +164,24 @@ function renderToday() {
   if (isComplete()) {
     UI.renderComplete(container, {
       name: state.profile.name,
-      summary: D.summarize(state.profile.startDate, state.today, state.reads),
+      summary: summary(),
+      birthday: followsBirthday(),
     }, { onStartAgain: startAgain, onKeepReading: keepReading });
     return;
   }
   const n = todayNumber();
-  const summary = D.summarize(state.profile.startDate, state.today, state.reads);
+  const totals = summary();
   UI.renderReading(container, {
     mode: 'today',
     n,
     date: state.today,
     entry: entryFor(n),
     name: state.profile.name,
-    status: D.dayState(state.today, state.today, state.reads.get(state.today)),
+    birthDate: birthDate(),
+    status: stateOf(state.today),
     read: state.reads.get(state.today),
-    missed: summary.missed,
+    missed: totals.missed,
+    earlier: totals.earlier,
     justRead: state.justRead,
   }, { onMarkRead: markRead });
 }
@@ -177,18 +194,26 @@ function renderPastDay(n) {
     date,
     entry: entryFor(n),
     name: state.profile.name,
-    status: D.dayState(date, state.today, state.reads.get(date)),
+    birthDate: birthDate(),
+    status: stateOf(date),
     read: state.reads.get(date),
     justRead: state.justRead,
   }, { onMarkRead: markRead });
 }
 
 function renderJourney() {
-  UI.renderJourney({ summaryEl: $('journey-summary'), monthsEl: $('journey-months') }, {
+  UI.renderJourney({
+    headingEl: $('journey-heading'),
+    summaryEl: $('journey-summary'),
+    monthsEl: $('journey-months'),
+    legendEarlierEl: $('legend-earlier'),
+  }, {
+    name: state.profile.name,
     startDate: state.profile.startDate,
+    joined: joinedDate(),
     today: state.today,
     reads: state.reads,
-    summary: D.summarize(state.profile.startDate, state.today, state.reads),
+    summary: summary(),
   });
 }
 
@@ -199,11 +224,33 @@ function renderJourney() {
 function renderWelcome() {
   const wasWelcome = document.body.dataset.route === 'welcome';
   showScreen('welcome');
+  personalise();
   document.title = 'Welcome · Newborn Daily Blessing';
   if (!wasWelcome) {
     $('welcome-step-name').hidden = false;
     $('welcome-step-reminders').hidden = true;
   }
+  // The plan covers the first year: the birthday can be up to 364 days ago.
+  const today = D.toDateString();
+  $('welcome-birth').max = today;
+  $('welcome-birth').min = D.addDays(today, -(D.PLAN_LENGTH - 1));
+}
+
+/** Error text for a birthday, or '' when it is fine. */
+function birthdayError(value, { firstYearOnly }) {
+  const today = D.toDateString();
+  if (!D.isDateString(value)) return "Please enter your baby's birthday.";
+  if (value > today) return 'The birthday cannot be in the future.';
+  if (firstYearOnly && D.dayNumber(value, today) > D.PLAN_LENGTH) {
+    return 'The plan covers the first year, so the birthday needs to be within the last 12 months.';
+  }
+  return '';
+}
+
+function setFieldError(input, errorEl, message) {
+  errorEl.textContent = message;
+  if (message) input.setAttribute('aria-invalid', 'true');
+  else input.removeAttribute('aria-invalid');
 }
 
 async function onWelcomeSubmit(event) {
@@ -219,11 +266,20 @@ async function onWelcomeSubmit(event) {
   }
   error.textContent = '';
   input.removeAttribute('aria-invalid');
+  const birthInput = $('welcome-birth');
+  const birthMessage = birthdayError(birthInput.value, { firstYearOnly: true });
+  setFieldError(birthInput, $('welcome-birth-error'), birthMessage);
+  if (birthMessage) {
+    birthInput.focus();
+    return;
+  }
   const time = D.isTimeString($('welcome-time').value) ? $('welcome-time').value : '07:00';
   const today = D.toDateString();
   const profile = {
     name,
-    startDate: today,
+    birthDate: birthInput.value,
+    startDate: birthInput.value, // Day 1 is the day the baby was born
+    joinedDate: today,           // earlier days are "not yet read", never "missed"
     reminderTime: time,
     createdAt: new Date().toISOString(),
     lastSeenDate: today,
@@ -250,6 +306,11 @@ function showRemindersStep() {
   $('welcome-step-name').hidden = true;
   $('welcome-step-reminders').hidden = false;
   for (const el of document.querySelectorAll('[data-bind="reminder-time"]')) el.textContent = state.profile.reminderTime;
+  personalise();
+  const name = state.profile.name;
+  const n = D.dayNumber(state.profile.startDate, state.today);
+  $('onboard-lede').textContent = `The app can remind you each day until you have read ${D.possessive(name)} blessing.`;
+  $('onboard-done').textContent = n === 1 ? 'Go to Day 1' : `Go to Day ${n}`;
   updateOnboardNotify();
   const ios = R.isIOS();
   $('onboard-calendar-pill').hidden = false;
@@ -333,12 +394,13 @@ async function markRead(date) {
 async function startAgain() {
   const ok = await confirmDialog({
     title: 'Start again from Day 1?',
-    text: `A fresh year starts today. The name ${state.profile.name} is kept; the reading history is cleared.`,
+    text: `A fresh year starts today. ${D.possessive(state.profile.name)} name and birthday are kept; the reading history is cleared.`,
     confirm: 'Start again',
   });
   if (!ok) return;
   const today = state.today;
-  const profile = { ...state.profile, startDate: today, lastSeenDate: today };
+  // A fresh plan from today. The name and birthday are kept.
+  const profile = { ...state.profile, birthDate: birthDate(), startDate: today, joinedDate: today, lastSeenDate: today };
   delete profile.continued;
   await DB.replaceAll(profile, []);
   state.profile = profile;
@@ -417,6 +479,12 @@ async function resume() {
 function renderSettings() {
   const nameInput = $('settings-name');
   if (document.activeElement !== nameInput) nameInput.value = state.profile.name;
+  const birthInput = $('settings-birth');
+  if (document.activeElement !== birthInput) birthInput.value = birthDate();
+  birthInput.max = state.today || D.toDateString();
+  $('settings-birth-hint').textContent = followsBirthday()
+    ? 'Day 1 of the plan is the birthday.'
+    : 'Your current plan started again on a later day, so changing the birthday does not move Day 1.';
   const timeInput = $('settings-time');
   if (document.activeElement !== timeInput) timeInput.value = state.profile.reminderTime;
   $('app-version').textContent = `Version ${APP_VERSION}.`;
@@ -460,22 +528,53 @@ function renderInstallCard() {
     : 'Install the app for its own icon, offline use, the reminder badge and notifications.';
 }
 
-async function onNameSubmit(event) {
+async function onBabySubmit(event) {
   event.preventDefault();
-  const input = $('settings-name');
-  const status = $('settings-name-status');
-  const name = D.cleanName(input.value);
+  const nameInput = $('settings-name');
+  const birthInput = $('settings-birth');
+  const status = $('settings-baby-status');
+  const name = D.cleanName(nameInput.value);
   if (!name) {
     status.textContent = "Please enter your baby's name.";
-    input.setAttribute('aria-invalid', 'true');
-    input.focus();
+    nameInput.setAttribute('aria-invalid', 'true');
+    nameInput.focus();
     return;
   }
-  input.removeAttribute('aria-invalid');
-  state.profile = await DB.updateProfile({ name });
-  input.value = name;
-  status.textContent = `Saved. Every prayer now uses ${name}.`;
+  nameInput.removeAttribute('aria-invalid');
+  const birthMessage = birthdayError(birthInput.value, { firstYearOnly: false });
+  if (birthMessage) {
+    status.textContent = birthMessage;
+    birthInput.setAttribute('aria-invalid', 'true');
+    birthInput.focus();
+    return;
+  }
+  birthInput.removeAttribute('aria-invalid');
+
+  const newBirth = birthInput.value;
+  const movesDayOne = newBirth !== birthDate() && followsBirthday();
+  if (movesDayOne) {
+    // Day 1 moves with the birthday. Readings before the new Day 1 would be orphaned.
+    const lost = [...state.reads.keys()].filter((d) => d < newBirth).length;
+    if (lost > 0) {
+      const ok = await confirmDialog({
+        title: 'Change the birthday?',
+        text: `Day 1 will move to the new birthday. ${lost === 1 ? '1 reading' : `${lost} readings`} from before that date will be removed.`,
+        confirm: 'Change',
+      });
+      if (!ok) return;
+    }
+    const joined = joinedDate() < newBirth ? newBirth : joinedDate();
+    state.profile = await DB.rebaseStart({ name, birthDate: newBirth, startDate: newBirth, joinedDate: joined });
+    state.reads = D.indexReads(await DB.getReads());
+  } else {
+    state.profile = await DB.updateProfile({ name, birthDate: newBirth });
+  }
+  nameInput.value = name;
+  status.textContent = movesDayOne
+    ? `Saved. Day 1 is now ${D.possessive(name)} birthday.`
+    : `Saved. Every prayer now uses ${name}.`;
   DB.broadcast({ type: 'data-changed', source: TAB_ID });
+  render();
 }
 
 async function onTimeChange() {
@@ -706,7 +805,8 @@ function bindEvents() {
   $('onboard-done').addEventListener('click', finishOnboarding);
   $('welcome-restore').addEventListener('click', () => $('import-file').click());
 
-  $('name-form').addEventListener('submit', onNameSubmit);
+  $('baby-form').addEventListener('submit', onBabySubmit);
+  $('welcome-birth').addEventListener('input', () => setFieldError($('welcome-birth'), $('welcome-birth-error'), ''));
   $('settings-time').addEventListener('change', onTimeChange);
   $('notify-enable').addEventListener('click', onEnableNotifications);
   $('notify-test').addEventListener('click', onTestNotification);

@@ -145,3 +145,62 @@ test('validateBackup accepts the spec example and rejects bad files', () => {
   // Bad reminder time falls back to the default rather than failing.
   assert.equal(DB.validateBackup({ version: 1, profile: { name: 'A', startDate: '2026-11-01', reminderTime: '25:00' }, reads: [] }).profile.reminderTime, '07:00');
 });
+
+test('days before joining are "earlier", never "missed", and count as read when read later', () => {
+  const birth = '2026-10-01';
+  const joined = '2026-10-20';
+  const today = '2026-10-25';
+  assert.equal(D.dayState('2026-10-05', today, undefined, joined), 'earlier');
+  assert.equal(D.dayState('2026-10-05', today, { readAt: noon(today) }, joined), 'read');
+  assert.equal(D.dayState('2026-10-22', today, undefined, joined), 'missed');
+  assert.equal(D.dayState('2026-10-22', today, { readAt: noon(today) }, joined), 'late');
+  assert.equal(D.dayState(today, today, undefined, joined), 'today');
+
+  const map = reads([['2026-10-02', noon(today)], ['2026-10-20', noon('2026-10-20')], ['2026-10-21', noon('2026-10-21')]]);
+  const s = D.summarize(birth, today, map, joined);
+  assert.equal(s.days, 25);
+  assert.equal(s.read, 3);
+  assert.equal(s.earlier, 18); // Oct 1–19 is 19 days, one of them read
+  assert.equal(s.missed, 3);   // Oct 22, 23, 24
+  assert.equal(s.streak, 0);
+});
+
+test('streak only counts from the day the parent joined', () => {
+  const birth = '2026-10-01';
+  const joined = '2026-10-10';
+  const map = new Map();
+  for (let d = birth; d <= '2026-10-12'; d = D.addDays(d, 1)) map.set(d, { date: d, readAt: noon('2026-10-12') });
+  map.set('2026-10-10', { date: '2026-10-10', readAt: noon('2026-10-10') });
+  map.set('2026-10-11', { date: '2026-10-11', readAt: noon('2026-10-11') });
+  map.set('2026-10-12', { date: '2026-10-12', readAt: noon('2026-10-12') });
+  assert.equal(D.streak(birth, '2026-10-12', map, joined), 3);
+});
+
+test('age wording', () => {
+  assert.equal(D.age('2026-10-01', '2026-10-01').text, 'born today');
+  assert.equal(D.age('2026-10-01', '2026-10-02').text, '1 day old');
+  assert.equal(D.age('2026-10-01', '2026-10-14').text, '13 days old');
+  assert.equal(D.age('2026-10-01', '2026-10-15').text, '2 weeks old');
+  assert.equal(D.age('2026-10-01', '2026-10-15').milestone, true);
+  assert.equal(D.age('2026-10-01', '2026-12-01').text, '2 months old');
+  assert.equal(D.age('2026-10-01', '2026-12-01').milestone, true);
+  assert.equal(D.age('2026-10-31', '2026-12-30').text, '8 weeks old'); // not yet 2 calendar months
+  assert.equal(D.age('2026-10-01', '2027-10-01').text, '1 year old');
+  assert.equal(D.age('2026-10-01', '2027-10-02').text, '12 months old');
+  assert.equal(D.age('2026-10-01', '2028-10-01').text, '2 years old');
+  assert.equal(D.age('2026-10-02', '2026-10-01'), null);
+  assert.equal(D.possessive('  Amara '), 'Amara’s');
+});
+
+test('backups keep the birthday; old backups fall back to the start date', () => {
+  const r = DB.validateBackup({
+    version: 1,
+    profile: { name: 'Amara', birthDate: '2026-09-01', startDate: '2026-09-01', joinedDate: '2026-10-01', reminderTime: '07:00' },
+    reads: [],
+  });
+  assert.equal(r.profile.birthDate, '2026-09-01');
+  assert.equal(r.profile.joinedDate, '2026-10-01');
+  const old = DB.validateBackup({ version: 1, profile: { name: 'Amara', startDate: '2026-11-01', reminderTime: '07:00' }, reads: [] });
+  assert.equal(old.profile.birthDate, '2026-11-01');
+  assert.equal(old.profile.joinedDate, '2026-11-01');
+});

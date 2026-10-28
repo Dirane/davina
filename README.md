@@ -2,6 +2,9 @@
 
 A verse and a prayer for your little one, every day of their first year.
 
+Day 1 is the baby's birthday, so a parent who starts later can still read every day
+since the baby was born. The baby's name personalises the header, prayers and screens.
+
 An installable web app (PWA) that runs entirely from GitHub Pages: no server, no
 accounts, no tracking, no running costs. Works offline after the first visit.
 Full requirements: [`Newborn Daily Blessing — PWA Specification.md`](./Newborn%20Daily%20Blessing%20—%20PWA%20Specification.md).

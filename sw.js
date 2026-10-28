@@ -6,7 +6,7 @@
  */
 importScripts('./js/days.js', './js/db.js');
 
-const CACHE_VERSION = 'blessing-v1';
+const CACHE_VERSION = 'blessing-v2';
 const CACHE_PREFIX = 'blessing-';
 const NOTIFICATION_TAG = 'daily-blessing';
 const PERIODIC_TAG = 'daily-blessing-check';

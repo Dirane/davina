@@ -3,7 +3,11 @@
  *
  * Dual-mode classic script (see days.js): exposes globalThis.NBDB.
  * Database 'newborn-blessing', version 1:
- *   profile  key "me"        { name, startDate, reminderTime, createdAt, lastSeenDate, continued? }
+ *   profile  key "me"        { name, birthDate, startDate, joinedDate, reminderTime,
+ *                              createdAt, lastSeenDate, continued? }
+ *            birthDate: the baby's birthday. startDate: Day 1 of the plan (the
+ *            birthday, or the day of "Start again"). joinedDate: the day the
+ *            parent set the app up; unread days before it are not "missed".
  *   reads    keyPath "date"  { date, dayNumber, readAt }
  */
 (function (root) {
@@ -109,6 +113,29 @@
     return record;
   }
 
+  /**
+   * Move Day 1 to a new start date (the birthday was corrected): update the
+   * profile, drop reads before the new start, renumber the rest. One transaction.
+   */
+  async function rebaseStart(fields) {
+    const D = root.NBDays;
+    const db = await open();
+    const tx = db.transaction(['profile', 'reads'], 'readwrite');
+    const p = tx.objectStore('profile');
+    const r = tx.objectStore('reads');
+    const current = await result(p.get(PROFILE_KEY));
+    if (!current) throw new Error('No profile');
+    const next = Object.assign({}, current, fields);
+    p.put(next, PROFILE_KEY);
+    const reads = await result(r.getAll());
+    for (const rec of reads) {
+      if (rec.date < next.startDate) r.delete(rec.date);
+      else r.put(Object.assign({}, rec, { dayNumber: D.dayNumber(next.startDate, rec.date) }));
+    }
+    await done(tx);
+    return next;
+  }
+
   async function clearAll() {
     const db = await open();
     const tx = db.transaction(['profile', 'reads'], 'readwrite');
@@ -135,7 +162,13 @@
     if (!profile) throw new Error('Nothing to export yet');
     const out = {
       version: BACKUP_VERSION,
-      profile: { name: profile.name, startDate: profile.startDate, reminderTime: profile.reminderTime },
+      profile: {
+        name: profile.name,
+        birthDate: profile.birthDate || profile.startDate,
+        startDate: profile.startDate,
+        joinedDate: profile.joinedDate || profile.startDate,
+        reminderTime: profile.reminderTime,
+      },
       reads: reads
         .slice()
         .sort((a, b) => (a.date < b.date ? -1 : 1))
@@ -176,9 +209,14 @@
       reads.push({ date: r.date, dayNumber: D.dayNumber(p.startDate, r.date), readAt: r.readAt });
     }
 
+    // Backups from before birthdays were asked: Day 1 was the setup day.
+    const birthDate = D.isDateString(p.birthDate) && p.birthDate <= p.startDate ? p.birthDate : p.startDate;
+    const joinedDate = D.isDateString(p.joinedDate) && p.joinedDate >= p.startDate ? p.joinedDate : p.startDate;
     const profile = {
       name,
+      birthDate,
       startDate: p.startDate,
+      joinedDate,
       reminderTime,
       createdAt: typeof p.createdAt === 'string' ? p.createdAt : new Date().toISOString(),
       lastSeenDate: D.isDateString(p.lastSeenDate) ? p.lastSeenDate : p.startDate,
@@ -198,7 +236,7 @@
 
   root.NBDB = Object.freeze({
     DB_NAME, CHANNEL, BACKUP_VERSION,
-    open, getProfile, saveProfile, updateProfile, getReads, getRead, markRead,
+    open, getProfile, saveProfile, updateProfile, rebaseStart, getReads, getRead, markRead,
     clearAll, replaceAll, exportBackup, validateBackup, broadcast,
   });
 })(typeof globalThis !== 'undefined' ? globalThis : self);
