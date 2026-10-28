@@ -41,25 +41,26 @@ The source of truth is `content/days.csv` (columns `day, theme, ref, verse, pray
 which opens in any spreadsheet app. `data/days.json` is generated from it.
 
 ```sh
-# Download the World English Bible once (public domain) for the verse check:
-curl -LO https://ebible.org/Scriptures/eng-web_vpl.zip && unzip eng-web_vpl.zip eng-web_vpl.txt
+# Download the King James Version once (public domain) for the verse check:
+curl -LO https://ebible.org/Scriptures/eng-kjv_vpl.zip && unzip eng-kjv_vpl.zip eng-kjv_vpl.txt
 
-# After editing refs, refill the verse column from the WEB (never type verses by hand):
-node tools/build-days.js --fill-verses --web eng-web_vpl.txt
+# After editing refs, refill the verse column from the KJV (never type verses by hand):
+node tools/build-days.js --fill-verses --bible eng-kjv_vpl.txt
 
 # Validate and rebuild data/days.json:
-node tools/build-days.js --web eng-web_vpl.txt
+node tools/build-days.js --bible eng-kjv_vpl.txt
 ```
 
 The build refuses to write `days.json` unless: there are exactly 365 days with no gaps;
 no field is empty; every prayer has `{name}`, ends with "Amen.", is 50–90 words, uses no
 he/she/him/her/his/hers, and is unique; references are well formed; repeated verses are
-at least 30 days apart; and (with `--web`) every verse matches the WEB exactly.
+at least 30 days apart; and (with `--bible`) every verse matches the KJV exactly.
 
-**Verse display rules** (`tools/web.js`). The wording is never changed, but a verse
-lifted out of its chapter is tidied for display: Psalm titles merged into verse 1 in the
-source are removed (exact titles in `tools/psalm-titles.json`), the musical note "Selah"
-is dropped, the first letter is capitalised, a passage ending mid-sentence ends with "…",
+**Verse display rules** (`tools/bible.js`). The wording is never changed, but a verse
+lifted out of its chapter is tidied for display: the KJV's supplied words (italic in
+print, `[bracketed]` in the source) are shown as plain text, ¶ paragraph marks are
+dropped, Psalm titles merged into verse 1 in the source are removed (exact titles in
+`tools/psalm-titles.json`), the musical note "Selah" is dropped, the first letter is capitalised, a passage ending mid-sentence ends with "…",
 and quotation marks cut off by the passage boundary are completed.
 
 Prayers use British spelling and avoid gendered pronouns, so they fit any baby. The
@@ -91,7 +92,7 @@ js/days.js            date maths, day states, streak (shared with sw.js)
 js/db.js              IndexedDB storage and backup validation (shared with sw.js)
 data/days.json        365 entries (generated)
 content/days.csv      365 entries (source)
-tools/                build-days.js, web.js, serve.js, make-icons.py
+tools/                build-days.js, bible.js, serve.js, make-icons.py
 tests/                node:test suites
 ```
 
@@ -109,6 +110,6 @@ and importing the `.ics` file into Google Calendar and Apple Calendar.
 
 ## Credits and licences
 
-- Scripture: World English Bible (WEB), public domain, from [ebible.org](https://ebible.org).
+- Scripture: King James Version (KJV), public domain, from [ebible.org](https://ebible.org).
 - Fonts: Lora and Inter, SIL Open Font License (see `fonts/`).
 - Prayers, code and icons: original to this project.

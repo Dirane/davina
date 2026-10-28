@@ -9,7 +9,7 @@ import * as UI from './ui.js';
 
 const D = globalThis.NBDays;
 const DB = globalThis.NBDB;
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 const TICK_MS = 30 * 1000;
 // Identifies this tab, so it can ignore its own broadcasts.
 const TAB_ID = Math.random().toString(36).slice(2);

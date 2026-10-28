@@ -1,10 +1,10 @@
 // Convert the content spreadsheet to data/days.json, checking every rule.
 //
-//   node tools/build-days.js [--csv content/days.csv] [--out data/days.json] [--web path/to/eng-web_vpl.txt]
-//   node tools/build-days.js --fill-verses --web path/to/eng-web_vpl.txt
+//   node tools/build-days.js [--csv content/days.csv] [--out data/days.json] [--bible path/to/eng-kjv_vpl.txt]
+//   node tools/build-days.js --fill-verses --bible path/to/eng-kjv_vpl.txt
 //
-// --web            also check every verse matches the World English Bible exactly.
-// --fill-verses    rewrite the verse column of the CSV from the WEB (authoring helper).
+// --bible          also check every verse matches the King James Version exactly.
+// --fill-verses    rewrite the verse column of the CSV from the KJV (authoring helper).
 // --check          validate only; don't write days.json.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -72,7 +72,7 @@ export const wordCount = (text) => text.split(/\s+/).filter((w) => /[\p{L}\p{N}{
 /* ---------- Validation ---------- */
 
 /** Returns { errors: [...], warnings: [...] }. */
-export function validate(entries, { web, lookup } = {}) {
+export function validate(entries, { bible, lookup } = {}) {
   const errors = [];
   const warnings = [];
   const err = (day, msg) => errors.push(`Day ${day}: ${msg}`);
@@ -107,10 +107,10 @@ export function validate(entries, { web, lookup } = {}) {
     }
     if (!refDays.has(e.ref)) refDays.set(e.ref, []);
     refDays.get(e.ref).push(e.day);
-    if (web && lookup) {
+    if (bible && lookup) {
       try {
-        const expected = lookup(web, e.ref);
-        if (expected !== e.verse) err(e.day, `verse does not match the WEB text for ${e.ref}:\n    expected: ${expected}\n    found:    ${e.verse}`);
+        const expected = lookup(bible, e.ref);
+        if (expected !== e.verse) err(e.day, `verse does not match the KJV text for ${e.ref}:\n    expected: ${expected}\n    found:    ${e.verse}`);
       } catch (x) {
         err(e.day, x.message);
       }
@@ -153,11 +153,11 @@ function arg(name, fallback) {
 async function main() {
   const csvPath = resolve(ROOT, arg('--csv', 'content/days.csv'));
   const outPath = resolve(ROOT, arg('--out', 'data/days.json'));
-  const webPath = arg('--web', process.env.WEB_VPL);
-  let web = null, lookup = null;
-  if (webPath) {
-    const mod = await import(pathToFileURL(resolve(ROOT, 'tools/web.js')).href);
-    web = mod.loadWeb(resolve(webPath));
+  const biblePath = arg('--bible', process.env.KJV_VPL);
+  let bible = null, lookup = null;
+  if (biblePath) {
+    const mod = await import(pathToFileURL(resolve(ROOT, 'tools/bible.js')).href);
+    bible = mod.loadBible(resolve(biblePath));
     lookup = mod.lookup;
   }
 
@@ -165,14 +165,14 @@ async function main() {
   let entries = rowsToEntries(rows);
 
   if (process.argv.includes('--fill-verses')) {
-    if (!web) throw new Error('--fill-verses needs --web <eng-web_vpl.txt>');
-    entries = entries.map((e) => ({ ...e, verse: lookup(web, e.ref) }));
+    if (!bible) throw new Error('--fill-verses needs --bible <eng-kjv_vpl.txt>');
+    entries = entries.map((e) => ({ ...e, verse: lookup(bible, e.ref) }));
     writeFileSync(csvPath, toCSV([COLUMNS, ...entries.map((e) => COLUMNS.map((c) => e[c]))]));
-    console.log(`Filled ${entries.length} verses from the WEB into ${csvPath}`);
+    console.log(`Filled ${entries.length} verses from the KJV into ${csvPath}`);
   }
 
   entries.sort((a, b) => a.day - b.day);
-  const { errors, warnings } = validate(entries, { web, lookup });
+  const { errors, warnings } = validate(entries, { bible, lookup });
   warnings.forEach((w) => console.warn(`warning: ${w}`));
   if (errors.length) {
     errors.forEach((e) => console.error(`error: ${e}`));
@@ -182,9 +182,9 @@ async function main() {
   if (!process.argv.includes('--check')) {
     const json = '[\n' + entries.map((e) => JSON.stringify({ day: e.day, theme: e.theme, ref: e.ref, verse: e.verse, prayer: e.prayer })).join(',\n') + '\n]\n';
     writeFileSync(outPath, json);
-    console.log(`Wrote ${entries.length} entries to ${outPath} (${(Buffer.byteLength(json) / 1024).toFixed(1)} KB)${web ? ', verses checked against the WEB' : ''}.`);
+    console.log(`Wrote ${entries.length} entries to ${outPath} (${(Buffer.byteLength(json) / 1024).toFixed(1)} KB)${bible ? ', verses checked against the KJV' : ''}.`);
   } else {
-    console.log(`OK: ${entries.length} entries valid${web ? ', verses match the WEB' : ''}.`);
+    console.log(`OK: ${entries.length} entries valid${bible ? ', verses match the KJV' : ''}.`);
   }
 }
 

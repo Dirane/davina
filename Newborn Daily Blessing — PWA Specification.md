@@ -28,7 +28,7 @@ Newborn Daily Blessing is a static, installable web app that gives a parent one 
 | Personalisation | Parent enters the baby's name and birthday once, on first open; the name appears in the header, titles, age line and prayers | The app reads as written for this child |
 | Day 1 | The baby's birthday (within the last 12 months) | Every day of the first year can be read, including the days before the app was set up |
 | Length | 365 days, then a "first year complete" screen | Matches the baby's first year |
-| Bible text | World English Bible (WEB) | Public domain, modern English; KJV is the fallback if preferred |
+| Bible text | King James Version (KJV) | Public domain, the most familiar English translation (changed from the WEB at the owner's request) |
 | Language | English only | Agreed with the owner |
 | Hosting | GitHub Pages only, no backend | Agreed with the owner |
 | Stack | Plain HTML, CSS and JavaScript modules, no build step | Push to `main` and it is live; nothing to compile or maintain |
@@ -52,7 +52,7 @@ The app has five screens and a bottom bar with two tabs: **Today** and **Journey
 
 - Header: "Day 12 of 365", today's date and the baby's age ("Amara is 3 weeks old"). The app header reads "Amara's Daily Blessing".
 - Theme label for the day, e.g. "Peaceful sleep".
-- Verse card: verse text in large serif type, reference underneath ("Psalm 4:8, WEB").
+- Verse card: verse text in large serif type, reference underneath ("Psalm 4:8, KJV").
 - Prayer card: the prayer with the baby's name filled in, ending in "Amen."
 - Primary button **Mark as read**. After tapping it becomes a quiet "Read today ✓" state and the reminder badge and notification are cleared.
 - If there are missed days, a small banner: "You have 3 days to catch up" linking to Journey.
@@ -92,14 +92,14 @@ All 365 days ship inside the app as one file, `data/days.json`, so the app works
   "day": 12,
   "theme": "Peaceful sleep",
   "ref": "Psalm 4:8",
-  "verse": "In peace I will both lay myself down and sleep, for you, Yahweh alone, make me live in safety.",
+  "verse": "I will both lay me down in peace, and sleep: for thou, LORD, only makest me dwell in safety.",
   "prayer": "Father, tonight I lay {name} down in your care. Quiet every fear, settle every cry, and let {name} sleep in safety, knowing you never sleep. Give me rest too, and patience for the long nights. Amen."
 }
 ```
 
 ### Rules for writing the content
 
-- **Verse text** is copied exactly from the World English Bible. Keep the WEB wording, including "Yahweh". Each card shows "WEB" after the reference.
+- **Verse text** is copied exactly from the King James Version (KJV). Supplied words printed in italics in the KJV are shown as plain text. Each card shows "KJV" after the reference.
 - **Prayers** are original writing, 50–90 words, in the parent's voice, addressed to God, ending in "Amen."
 - Every prayer uses `{name}` at least once. Prayers avoid he/she so they fit any baby.
 - If the name is ever empty, `{name}` falls back to "my little one".
@@ -123,7 +123,7 @@ One theme per week, cycling through these areas so the year feels varied:
 ### Authoring workflow
 
 1. Draft all 365 entries in a spreadsheet with the five columns above.
-2. Check every verse against a WEB source (ebible.org publishes it free).
+2. Check every verse against a KJV source (ebible.org publishes it free).
 3. Convert to `days.json` with a small script, which also checks: 365 entries, days 1–365 with no gaps, every prayer contains `{name}`, no field empty.
 4. A second person proofreads before launch.
 

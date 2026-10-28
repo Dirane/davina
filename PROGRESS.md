@@ -13,7 +13,7 @@ Update this file as work completes. After a context reset, read CLAUDE.md, then 
 - [x] reminders.js (permission, badge, notification, periodic sync, .ics)
 - [x] sw.js
 - [x] manifest.webmanifest
-- [x] tools: serve.js, web.js (WEB lookup), build-days.js (CSV→JSON + checks)
+- [x] tools: serve.js, bible.js (KJV lookup; was web.js), build-days.js (CSV→JSON + checks)
 - [x] Content: 365 entries authored → content/days.csv → data/days.json
 - [x] Browser verification (Playwright): flows, offline, widths 320–1440, dark mode, update bar, periodicsync, SW mark-read
 - [x] Lighthouse (Perf 99, A11y 100, BP 100, SEO 100) and axe (0 violations, all screens, both themes)
@@ -76,3 +76,17 @@ Plan:
 Notes: first birthday shows "1 year old today"; banner for earlier-only days is the calm
 green style (warm tint stays for real missed days). Old profiles without birthDate work
 (fallback to startDate). CACHE_VERSION blessing-v2, APP_VERSION 1.1.0.
+
+## Change 3 (2026-10-28): KJV instead of WEB  [DONE]
+- Owner asked for the ESV; declined for now (Crossway licence: verses would be ~27% of
+  the app text, over their 25% free-quotation limit, and the text needs an ESV API key).
+  Owner chose the KJV (public domain).
+- Source: https://ebible.org/Scriptures/eng-kjv_vpl.zip (+ eng-kjv_usfm.zip for Psalm
+  titles), downloaded to $SCRATCH/kjv/. tools/web.js → tools/bible.js (loadBible),
+  build-days `--web` → `--bible`. tools/psalm-titles.json regenerated from KJV USFM \d
+  lines by $SCRATCH/kjv-titles.mjs (116 titles, all match the vpl exactly).
+- Display: [supplied words] shown without brackets, ¶ dropped, rest as before.
+- Day 8 prayer "Yahweh, my keeper" → "Lord, my keeper". Card label "…, KJV".
+- Rebuild: `node tools/build-days.js --bible $SCRATCH/kjv/vpl/eng-kjv_vpl.txt`.
+- Released as APP_VERSION 1.2.0, CACHE_VERSION blessing-v3.
+- Older notes above that mention WEB/web.js/--web describe the original build.

@@ -119,7 +119,7 @@ export function renderReading(container, model, { onMarkRead }) {
 
   nodes.push(h('article', { class: 'card verse-card', 'aria-label': 'Verse' },
     h('blockquote', { class: 'verse' }, h('p', { text: entry.verse })),
-    h('p', { class: 'ref', text: `${entry.ref}, WEB` }),
+    h('p', { class: 'ref', text: `${entry.ref}, KJV` }),
   ));
 
   const who = D.cleanName(name) || D.NAME_FALLBACK;

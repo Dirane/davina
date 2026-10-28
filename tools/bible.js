@@ -1,6 +1,7 @@
-// World English Bible lookup, used by the content tools (never by the app).
-// Source: eng-web_vpl.txt from https://ebible.org/Scriptures/eng-web_vpl.zip
-// (one verse per line: "PSA 4:8 In peace I will …").
+// King James Version lookup, used by the content tools (never by the app).
+// Source: eng-kjv_vpl.txt from https://ebible.org/Scriptures/eng-kjv_vpl.zip
+// (public domain; one verse per line: "PSA 4:8 I will both lay me down …").
+// The source marks the KJV's italic supplied words as [was] and paragraphs as ¶.
 import { readFileSync } from 'node:fs';
 
 export const BOOKS = {
@@ -32,17 +33,18 @@ export function parseRef(ref) {
   return { book: BOOKS[m[1]], chapter: +m[2], from, to };
 }
 
-export function loadWeb(path) {
+export function loadBible(path) {
   const map = new Map();
   for (const line of readFileSync(path, 'utf8').split(/\r?\n/)) {
     const m = /^(\w{3}) (\d+:\d+) (.*)$/.exec(line);
     if (m) map.set(`${m[1]} ${m[2]}`, m[3].trim());
   }
-  if (map.size < 30000) throw new Error(`${path} does not look like eng-web_vpl.txt`);
+  if (map.size < 30000) throw new Error(`${path} does not look like eng-kjv_vpl.txt`);
   return map;
 }
 
-// Psalm titles are merged into verse 1 in the source; strip the exact title.
+// Psalm titles are merged into verse 1 in the source; strip the exact title
+// (tools/psalm-titles.json, taken from the \d lines of the KJV USFM).
 const PSALM_TITLES = JSON.parse(readFileSync(new URL('./psalm-titles.json', import.meta.url), 'utf8'));
 
 function stripPsalmTitle(chapter, text) {
@@ -82,25 +84,26 @@ export function tidyQuotes(text) {
 
 /**
  * Display rules for a passage lifted out of its context (wording untouched):
- * drop the musical note "Selah", capitalise the first letter, and end a
- * passage that stops mid-sentence with an ellipsis.
+ * show supplied words without their [brackets], drop paragraph marks and the
+ * musical note "Selah", capitalise the first letter, and end a passage that
+ * stops mid-sentence with an ellipsis.
  */
 export function presentVerse(text) {
-  let t = text.replace(/\s*\bSelah\.?(?=\s|$)/g, '').replace(/\s+/g, ' ').trim();
+  let t = text.replace(/\[([^\]]*)\]/g, '$1').replace(/¶/g, '').replace(/\s*\bSelah\.?(?=\s|$)/g, '').replace(/\s+/g, ' ').trim();
   t = t.replace(/^([“‘]*)(\p{Ll})/u, (_, q, ch) => q + ch.toUpperCase());
   t = t.replace(/[,;:—]$/, '…');
   return tidyQuotes(t);
 }
 
-/** Verse text for a reference: the WEB wording, with the display rules above. */
-export function lookup(web, ref) {
+/** Verse text for a reference: the KJV wording, with the display rules above. */
+export function lookup(bible, ref) {
   const r = parseRef(ref);
   if (!r) throw new Error(`Unrecognised reference "${ref}"`);
   const parts = [];
   for (let v = r.from; v <= r.to; v++) {
     const key = `${r.book} ${r.chapter}:${v}`;
-    let text = web.get(key);
-    if (!text) throw new Error(`"${ref}": ${key} not found in the WEB source`);
+    let text = bible.get(key);
+    if (!text) throw new Error(`"${ref}": ${key} not found in the KJV source`);
     if (r.book === 'PSA' && v === 1) text = stripPsalmTitle(r.chapter, text);
     parts.push(text);
   }

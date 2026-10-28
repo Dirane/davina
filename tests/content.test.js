@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { parseCSV, toCSV, rowsToEntries, validate, wordCount } from '../tools/build-days.js';
-import { parseRef, tidyQuotes, presentVerse } from '../tools/web.js';
+import { parseRef, tidyQuotes, presentVerse } from '../tools/bible.js';
 
 const root = new URL('..', import.meta.url);
 
@@ -29,6 +29,8 @@ test('tidyQuotes completes quotation marks cut off by the passage boundary', () 
 });
 
 test('presentVerse: capitalise, drop Selah, ellipsis for a cut-off ending', () => {
+  assert.equal(presentVerse('¶ The LORD [is] my shepherd; I shall not want.'), 'The LORD is my shepherd; I shall not want.');
+  assert.equal(presentVerse('The LORD bless thee, and keep thee:'), 'The LORD bless thee, and keep thee…');
   assert.equal(presentVerse('rejoicing in hope, enduring in troubles,'), 'Rejoicing in hope, enduring in troubles…');
   assert.equal(presentVerse('You are my hiding place. Selah.'), 'You are my hiding place.');
 });

@@ -15,8 +15,8 @@ Static PWA (GitHub Pages, no backend, no build step). Source of truth for requir
   `import './days.js'`; `sw.js` loads them with `importScripts`. Keep them that way
   (module service workers are not supported everywhere).
 - Bump `CACHE_VERSION` in `sw.js` on every release, and add any new file to `PRECACHE`.
-- Bible text is the World English Bible (eng-web, uses "Yahweh"), exact wording.
-  Verse text in `content/days.csv` is filled from the WEB source by tooling, never typed.
+- Bible text is the King James Version (ebible.org eng-kjv), exact wording. Verse text in
+  `content/days.csv` is filled from the KJV source by tooling, never typed.
 - Prayers: original, 50–90 words, parent's voice, addressed to God, end with "Amen.",
   contain `{name}`, no gendered pronouns for the baby (he/she/him/her/his/hers).
 
@@ -29,8 +29,8 @@ Static PWA (GitHub Pages, no backend, no build step). Source of truth for requir
 
 ## Commands
 - `npm test` — unit + release tests (date maths, backup, ics, content, precache list).
-- `node tools/build-days.js --web <eng-web_vpl.txt>` — rebuild and validate `data/days.json`
-  (see README for the WEB download).
+- `node tools/build-days.js --bible <eng-kjv_vpl.txt>` — rebuild and validate `data/days.json`
+  (see README for the KJV download).
 - `npm run serve` — local static server on http://localhost:8080.
 
 ## Release
