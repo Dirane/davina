@@ -108,3 +108,10 @@ green style (warm tint stays for real missed days). Old profiles without birthDa
   night, no overflow 320–1440. Owner to check on devices: lock screen Android/iPhone, sound
   quality on phone speakers.
 - Released as APP_VERSION 1.3.0, CACHE_VERSION blessing-v4.
+
+## Change 5 (2026-10-28): More lullabies  [DONE]
+- TUNES in js/sounds.js: lullaby (Brahms, id kept for saved prefs), twinkle, sleeping
+  (Frère Jacques), grace (Amazing Grace), greensleeves. Shared musicBox() synth; each tune
+  has unit (s per step), bar (steps, tested: whole bars), octave shift.
+- Soothe grid split into GROUPS "Sounds" and "Lullabies" (h2 per group). New icon i-star.
+- Released as APP_VERSION 1.4.0, CACHE_VERSION blessing-v5.

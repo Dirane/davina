@@ -10,7 +10,7 @@ import { initSoothe, renderSoothe } from './soothe.js';
 
 const D = globalThis.NBDays;
 const DB = globalThis.NBDB;
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 const APP_NAME = 'Davina';
 const TICK_MS = 30 * 1000;
 // Identifies this tab, so it can ignore its own broadcasts.

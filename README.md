@@ -12,8 +12,10 @@ Full requirements: [`Newborn Daily Blessing — PWA Specification.md`](./Newborn
 
 ## Soothe
 
-The Soothe tab plays six calming sounds: white, pink and brown noise, a 70 bpm
-heartbeat, shushing, and Brahms’ Lullaby as music-box tones. All are generated on the
+The Soothe tab plays five calming sounds (white, pink and brown noise, a 70 bpm
+heartbeat, shushing) and five public-domain lullabies as music-box tones (Brahms’
+Lullaby, Twinkle Twinkle, Are You Sleeping, Amazing Grace, Greensleeves). Melodies are
+note lists in `TUNES` in `js/sounds.js`; add one there and in `SOUNDS`. All are generated on the
 device (`js/sounds.js`), so there are no audio files and they work offline. Volume starts
 at 30% and is capped at 70%; the sleep timer (15/30/60 min or none) fades out over 10 s.
 The night screen dims the display and keeps it awake so sound continues on every phone;
@@ -129,6 +131,7 @@ and importing the `.ics` file into Google Calendar and Apple Calendar.
 
 - Scripture: King James Version (KJV), public domain, from [ebible.org](https://ebible.org).
 - Fonts: Lora and Inter, SIL Open Font License (see `fonts/`).
-- Lullaby melody: Johannes Brahms, Wiegenlied Op. 49 No. 4 (1868), public domain. All
-  sounds are synthesised by this app.
+- Lullaby melodies, all public domain: Brahms, Wiegenlied Op. 49 No. 4 (1868); "Ah ! vous
+  dirai-je, maman" (Twinkle, Twinkle; 1761); Frère Jacques (traditional); "New Britain"
+  (Amazing Grace; 1829); Greensleeves (traditional). All sounds are synthesised by this app.
 - Prayers, code and icons: original to this project.

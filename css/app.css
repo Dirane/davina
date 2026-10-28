@@ -506,6 +506,10 @@ input[aria-invalid="true"] { border-color: var(--danger); }
 
 /* ---------- Soothe ---------- */
 .tip-list { padding-left: 1.2em; display: flex; flex-direction: column; gap: var(--s2); font-size: 15px; }
+.sound-groups { display: flex; flex-direction: column; gap: var(--s6); }
+.sound-group { display: flex; flex-direction: column; gap: var(--s3); }
+.sound-group-title { font-size: 17px; font-weight: 600; }
+.sound-group .hint { margin-top: calc(-1 * var(--s2)); }
 .sound-grid {
   list-style: none;
   padding: 0;

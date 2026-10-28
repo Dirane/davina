@@ -4,7 +4,7 @@
  *
  * Each sound is a mono Float32Array whose end runs straight into its start:
  * noises are cross-faded over the loop point, and timed sounds (heartbeat,
- * shush, lullaby) are a whole number of periods rendered circularly.
+ * shush, lullabies) are a whole number of periods rendered circularly.
  */
 
 export const DEFAULT_VOLUME = 0.3;  // start at 30%
@@ -20,12 +20,21 @@ export function clampVolume(v) {
 }
 
 export const SOUNDS = [
-  { id: 'white', title: 'White noise', blurb: 'Even, steady hiss', icon: 'i-wave' },
-  { id: 'pink', title: 'Pink noise', blurb: 'Softer, like steady rain', icon: 'i-rain' },
-  { id: 'brown', title: 'Brown noise', blurb: 'Deep, low rumble', icon: 'i-wave-low' },
-  { id: 'heartbeat', title: 'Heartbeat', blurb: 'Slow, 70 beats a minute', icon: 'i-heart' },
-  { id: 'shush', title: 'Shush', blurb: 'Gentle, rhythmic shushing', icon: 'i-wind' },
-  { id: 'lullaby', title: 'Lullaby', blurb: 'Brahms’ Lullaby, music box', icon: 'i-note' },
+  { id: 'white', title: 'White noise', blurb: 'Even, steady hiss', icon: 'i-wave', group: 'sounds' },
+  { id: 'pink', title: 'Pink noise', blurb: 'Softer, like steady rain', icon: 'i-rain', group: 'sounds' },
+  { id: 'brown', title: 'Brown noise', blurb: 'Deep, low rumble', icon: 'i-wave-low', group: 'sounds' },
+  { id: 'heartbeat', title: 'Heartbeat', blurb: 'Slow, 70 beats a minute', icon: 'i-heart', group: 'sounds' },
+  { id: 'shush', title: 'Shush', blurb: 'Gentle, rhythmic shushing', icon: 'i-wind', group: 'sounds' },
+  { id: 'lullaby', title: 'Brahms’ Lullaby', blurb: 'Lullaby and goodnight', icon: 'i-note', group: 'lullabies' },
+  { id: 'twinkle', title: 'Twinkle, Twinkle', blurb: 'Little star, softly', icon: 'i-star', group: 'lullabies' },
+  { id: 'sleeping', title: 'Are You Sleeping', blurb: 'Frère Jacques, slow', icon: 'i-note', group: 'lullabies' },
+  { id: 'grace', title: 'Amazing Grace', blurb: 'The gentle hymn', icon: 'i-note', group: 'lullabies' },
+  { id: 'greensleeves', title: 'Greensleeves', blurb: 'Old English tune', icon: 'i-note', group: 'lullabies' },
+];
+
+export const GROUPS = [
+  { id: 'sounds', title: 'Sounds' },
+  { id: 'lullabies', title: 'Lullabies', note: 'Music-box melodies, all in the public domain.' },
 ];
 
 export const soundById = (id) => SOUNDS.find((s) => s.id === id) || null;
@@ -219,34 +228,130 @@ function heartbeat(sr) {
   return normalise(out, { peak: 0.9 });
 }
 
-/* ---------- Lullaby: Brahms' Lullaby (Wiegenlied, Op. 49 No. 4, 1868, public domain) ---------- */
+/* ---------- Lullabies: public-domain melodies as music-box tones ---------- */
 
-// [MIDI note, length in eighth notes]; null is a rest. 3/4 time, starting on the pickup.
-export const LULLABY = [
-  [64, 1], [64, 1],
-  [67, 4], [64, 1], [64, 1],
-  [67, 4], [64, 1], [67, 1],
-  [72, 2], [71, 2], [69, 2],
-  [69, 2], [67, 2], [62, 1], [64, 1],
-  [65, 2], [62, 2], [62, 1], [64, 1],
-  [65, 4], [62, 1], [65, 1],
-  [71, 1], [69, 1], [67, 2], [71, 2],
-  [72, 4], [60, 1], [60, 1],
-  [72, 4], [69, 1], [65, 1],
-  [67, 4], [64, 1], [60, 1],
-  [65, 2], [67, 2], [69, 2],
-  [67, 4], [60, 1], [60, 1],
-  [72, 4], [69, 1], [65, 1],
-  [67, 4], [64, 1], [60, 1],
-  [65, 2], [64, 2], [62, 2],
-  [60, 6],
-  [null, 4],
-];
-const EIGHTH_SECONDS = 0.42;
+// Melodies are [MIDI note, length] pairs; null is a rest. Each tune has a `unit` (seconds per length step), a bar length in steps (for
+// the tests: every tune must fill whole bars, pickup included), and an octave shift.
+export const TUNES = {
+  // Brahms' Lullaby (Wiegenlied, Op. 49 No. 4, 1868). 3/4, in eighth notes.
+  lullaby: {
+    unit: 0.42, bar: 6, octave: 1,
+    notes: [
+      [64, 1], [64, 1],
+      [67, 4], [64, 1], [64, 1],
+      [67, 4], [64, 1], [67, 1],
+      [72, 2], [71, 2], [69, 2],
+      [69, 2], [67, 2], [62, 1], [64, 1],
+      [65, 2], [62, 2], [62, 1], [64, 1],
+      [65, 4], [62, 1], [65, 1],
+      [71, 1], [69, 1], [67, 2], [71, 2],
+      [72, 4], [60, 1], [60, 1],
+      [72, 4], [69, 1], [65, 1],
+      [67, 4], [64, 1], [60, 1],
+      [65, 2], [67, 2], [69, 2],
+      [67, 4], [60, 1], [60, 1],
+      [72, 4], [69, 1], [65, 1],
+      [67, 4], [64, 1], [60, 1],
+      [65, 2], [64, 2], [62, 2],
+      [60, 6],
+      [null, 4],
+    ],
+  },
+  // Twinkle, Twinkle, Little Star ("Ah ! vous dirai-je, maman", France, 1761). 4/4, in eighths.
+  twinkle: {
+    unit: 0.34, bar: 8, octave: 1,
+    notes: [
+      [60, 2], [60, 2], [67, 2], [67, 2], [69, 2], [69, 2], [67, 4],
+      [65, 2], [65, 2], [64, 2], [64, 2], [62, 2], [62, 2], [60, 4],
+      [67, 2], [67, 2], [65, 2], [65, 2], [64, 2], [64, 2], [62, 4],
+      [67, 2], [67, 2], [65, 2], [65, 2], [64, 2], [64, 2], [62, 4],
+      [60, 2], [60, 2], [67, 2], [67, 2], [69, 2], [69, 2], [67, 4],
+      [65, 2], [65, 2], [64, 2], [64, 2], [62, 2], [62, 2], [60, 4],
+      [null, 8],
+    ],
+  },
+  // Are You Sleeping (Frère Jacques, France, 18th century). 4/4, in eighths, slow.
+  sleeping: {
+    unit: 0.36, bar: 8, octave: 1,
+    notes: [
+      [60, 2], [62, 2], [64, 2], [60, 2],
+      [60, 2], [62, 2], [64, 2], [60, 2],
+      [64, 2], [65, 2], [67, 4],
+      [64, 2], [65, 2], [67, 4],
+      [67, 1], [69, 1], [67, 1], [65, 1], [64, 2], [60, 2],
+      [67, 1], [69, 1], [67, 1], [65, 1], [64, 2], [60, 2],
+      [60, 2], [55, 2], [60, 4],
+      [60, 2], [55, 2], [60, 4],
+      [null, 8],
+    ],
+  },
+  // Amazing Grace (hymn tune "New Britain", USA, 1829). 3/4, in eighths.
+  grace: {
+    unit: 0.4, bar: 6, octave: 1,
+    notes: [
+      [62, 2],
+      [67, 4], [71, 1], [67, 1],
+      [71, 4], [69, 2],
+      [67, 4], [64, 2],
+      [62, 4], [62, 2],
+      [67, 4], [71, 1], [67, 1],
+      [71, 4], [69, 2],
+      [74, 4], [71, 2],
+      [74, 4], [71, 1], [67, 1],
+      [71, 4], [69, 2],
+      [67, 4], [64, 2],
+      [62, 4], [62, 2],
+      [67, 4], [71, 1], [67, 1],
+      [71, 4], [69, 2],
+      [67, 6],
+      [null, 4],
+    ],
+  },
+  // Greensleeves (English, 16th century). 3/4, in sixteenths; already in a music-box register.
+  greensleeves: {
+    unit: 0.15, bar: 12, octave: 0,
+    notes: [
+      [69, 4],
+      [72, 8], [74, 4],
+      [76, 6], [77, 2], [76, 4],
+      [74, 8], [71, 4],
+      [67, 6], [69, 2], [71, 4],
+      [72, 8], [69, 4],
+      [69, 6], [68, 2], [69, 4],
+      [71, 8], [68, 4],
+      [64, 8], [69, 4],
+      [72, 8], [74, 4],
+      [76, 6], [77, 2], [76, 4],
+      [74, 8], [71, 4],
+      [67, 6], [69, 2], [71, 4],
+      [72, 6], [71, 2], [69, 4],
+      [68, 6], [66, 2], [68, 4],
+      [69, 12],
+      [69, 12],
+      [79, 12],
+      [79, 6], [78, 2], [76, 4],
+      [74, 8], [71, 4],
+      [67, 6], [69, 2], [71, 4],
+      [72, 8], [69, 4],
+      [69, 6], [68, 2], [69, 4],
+      [71, 8], [68, 4],
+      [64, 12],
+      [79, 12],
+      [79, 6], [78, 2], [76, 4],
+      [74, 8], [71, 4],
+      [67, 6], [69, 2], [71, 4],
+      [72, 6], [71, 2], [69, 4],
+      [68, 6], [66, 2], [68, 4],
+      [69, 12],
+      [69, 8],
+      [null, 12],
+    ],
+  },
+};
 
 /** One music-box note: a few decaying partials, the top one slightly inharmonic like a tine. */
 function musicBoxNote(sr, midi) {
-  const f = 440 * 2 ** ((midi + 12 - 69) / 12); // an octave up: music-box register
+  const f = 440 * 2 ** ((midi - 69) / 12);
   const n = Math.round(sr * 2.2);
   const x = new Float32Array(n);
   const partials = [[1, 1, 1.4], [2, 0.22, 0.5], [3, 0.08, 0.3], [4.2, 0.05, 0.18]];
@@ -270,16 +375,17 @@ function musicBoxNote(sr, midi) {
   return x;
 }
 
-function lullaby(sr) {
-  const step = Math.round(sr * EIGHTH_SECONDS);
-  const total = LULLABY.reduce((sum, [, len]) => sum + len, 0);
+function musicBox(sr, { notes, unit, octave }) {
+  const step = Math.round(sr * unit);
+  const total = notes.reduce((sum, [, len]) => sum + len, 0);
   const out = new Float32Array(step * total);
-  const notes = new Map();
+  const made = new Map();
   let at = 0;
-  for (const [midi, len] of LULLABY) {
+  for (const [midi, len] of notes) {
     if (midi != null) {
-      if (!notes.has(midi)) notes.set(midi, musicBoxNote(sr, midi));
-      addCircular(out, notes.get(midi), at, 1);
+      const pitch = midi + 12 * octave;
+      if (!made.has(pitch)) made.set(pitch, musicBoxNote(sr, pitch));
+      addCircular(out, made.get(pitch), at, 1);
     }
     at += len * step;
   }
@@ -293,7 +399,8 @@ function lullaby(sr) {
 
 /* ---------- Public ---------- */
 
-const MAKERS = { white, pink, brown, heartbeat, shush, lullaby };
+const MAKERS = { white, pink, brown, heartbeat, shush };
+for (const [id, tune] of Object.entries(TUNES)) MAKERS[id] = (sr) => musicBox(sr, tune);
 
 /** The loop for a sound at a sample rate, as a mono Float32Array (peaks within ±1). */
 export function synthesize(id, sampleRate) {

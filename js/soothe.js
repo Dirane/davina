@@ -9,7 +9,7 @@
  */
 import './db.js';
 import {
-  SOUNDS, soundById, synthesize, clampVolume, silentWav, formatRemaining,
+  SOUNDS, GROUPS, soundById, synthesize, clampVolume, silentWav, formatRemaining,
   DEFAULT_VOLUME, MAX_GAIN, FADE_OUT_SECONDS, TIMER_CHOICES,
 } from './sounds.js';
 
@@ -467,9 +467,32 @@ function render() {
 /* ====================================================================== */
 
 function buildGrid() {
-  const grid = $('sound-grid');
-  grid.textContent = '';
+  const container = $('sound-groups');
+  container.textContent = '';
+  const grids = {};
+  for (const group of GROUPS) {
+    const section = document.createElement('section');
+    section.className = 'sound-group';
+    section.setAttribute('aria-labelledby', `sound-group-${group.id}`);
+    const heading = document.createElement('h2');
+    heading.className = 'sound-group-title';
+    heading.id = `sound-group-${group.id}`;
+    heading.textContent = group.title;
+    section.append(heading);
+    if (group.note) {
+      const note = document.createElement('p');
+      note.className = 'hint';
+      note.textContent = group.note;
+      section.append(note);
+    }
+    const grid = document.createElement('ul');
+    grid.className = 'sound-grid';
+    section.append(grid);
+    container.append(section);
+    grids[group.id] = grid;
+  }
   for (const sound of SOUNDS) {
+    const grid = grids[sound.group];
     const li = document.createElement('li');
     const button = document.createElement('button');
     button.type = 'button';

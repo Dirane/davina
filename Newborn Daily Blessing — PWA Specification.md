@@ -74,7 +74,7 @@ The app has five screens and a bottom bar with two tabs: **Today** and **Journey
 
 A third tab, **Soothe** (moon icon), next to Today and Journey. Route `#soothe`.
 
-- One grid of six large cards: White noise, Pink noise, Brown noise, Heartbeat (70 bpm), Shush, and Lullaby (Brahms’ Lullaby, 1868, public domain, as soft music-box tones). Every sound is synthesised in JavaScript as a seamless loop; there are no audio files.
+- Large cards in two groups. **Sounds**: White noise, Pink noise, Brown noise, Heartbeat (70 bpm), Shush. **Lullabies**, as soft music-box tones: Brahms’ Lullaby (1868), Twinkle, Twinkle (1761 melody), Are You Sleeping (Frère Jacques), Amazing Grace (tune "New Britain", 1829) and Greensleeves (16th century), all in the public domain. Every sound is synthesised in JavaScript as a seamless loop; there are no audio files.
 - Tapping a card plays it (within 1 second); tapping the playing card pauses it.
 - One player bar, fixed above the bottom tabs: play/pause, title and time left, a volume slider and a sleep timer (15, 30 or 60 minutes, or no timer; 30 by default). On other tabs it shrinks to play/pause and title while a sound plays.
 - The timer fades the sound out over the last 10 seconds, then stops it. The fade is scheduled on the audio clock, so it happens on time even when the page's timers are throttled.

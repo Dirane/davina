@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  SOUNDS, synthesize, clampVolume, silentWav, formatRemaining, LULLABY,
+  SOUNDS, GROUPS, TUNES, synthesize, clampVolume, silentWav, formatRemaining,
   DEFAULT_VOLUME, MAX_GAIN, FADE_OUT_SECONDS, TIMER_CHOICES,
 } from '../js/sounds.js';
 
@@ -19,11 +19,28 @@ test('safety limits: start at 30%, never above 70%, 10 s fade', () => {
   assert.equal(clampVolume(Infinity), 0);
 });
 
-test('six sounds, including one public-domain lullaby', () => {
-  assert.deepEqual(SOUNDS.map((s) => s.id), ['white', 'pink', 'brown', 'heartbeat', 'shush', 'lullaby']);
-  // 3/4 time: after the two-eighth pickup, the melody fills whole bars.
-  const eighths = LULLABY.reduce((sum, [, len]) => sum + len, 0);
-  assert.equal(eighths % 6, 0);
+test('five sounds and five public-domain lullabies, in two groups', () => {
+  assert.deepEqual(SOUNDS.map((s) => s.id), [
+    'white', 'pink', 'brown', 'heartbeat', 'shush',
+    'lullaby', 'twinkle', 'sleeping', 'grace', 'greensleeves',
+  ]);
+  const groups = GROUPS.map((g) => g.id);
+  for (const s of SOUNDS) assert.ok(groups.includes(s.group), `${s.id} has a group`);
+  assert.equal(SOUNDS.filter((s) => s.group === 'lullabies').length, 5);
+  for (const s of SOUNDS.filter((x) => x.group === 'lullabies')) assert.ok(TUNES[s.id], `${s.id} has a tune`);
+});
+
+test('every lullaby fills whole bars, so the loop keeps the beat', () => {
+  for (const [id, tune] of Object.entries(TUNES)) {
+    const total = tune.notes.reduce((sum, [, len]) => sum + len, 0);
+    assert.equal(total % tune.bar, 0, `${id}: ${total} steps is not a whole number of ${tune.bar}-step bars`);
+    for (const [midi, len] of tune.notes) {
+      assert.ok(Number.isInteger(len) && len > 0, `${id}: bad length ${len}`);
+      assert.ok(midi === null || (midi >= 48 && midi <= 84), `${id}: note ${midi} out of range`);
+    }
+    const seconds = total * tune.unit;
+    assert.ok(seconds > 15 && seconds < 90, `${id}: loop is ${seconds.toFixed(1)} s`);
+  }
 });
 
 for (const sampleRate of [44100, 48000]) {
