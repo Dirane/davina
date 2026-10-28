@@ -1,15 +1,17 @@
 /*
  * Start-up, routing between screens, and the event handlers.
- * Routes (URL hash): #today  #journey  #day/<n>  #settings
+ * Routes (URL hash): #today  #journey  #day/<n>  #soothe  #settings
  */
 import './days.js';
 import './db.js';
 import * as R from './reminders.js';
 import * as UI from './ui.js';
+import { initSoothe, renderSoothe } from './soothe.js';
 
 const D = globalThis.NBDays;
 const DB = globalThis.NBDB;
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
+const APP_NAME = 'Davina';
 const TICK_MS = 30 * 1000;
 // Identifies this tab, so it can ignore its own broadcasts.
 const TAB_ID = Math.random().toString(36).slice(2);
@@ -82,11 +84,12 @@ const joinedDate = () => state.profile.joinedDate || state.profile.startDate;
 const followsBirthday = () => state.profile.startDate === birthDate();
 const summary = () => D.summarize(state.profile.startDate, state.today, state.reads, joinedDate());
 const stateOf = (date) => D.dayState(date, state.today, state.reads.get(date), joinedDate());
-const appTitle = () => (state.profile ? `${D.possessive(state.profile.name)} Daily Blessing` : 'Newborn Daily Blessing');
+// The app is called Davina; the header keeps the personal "Amara’s Daily Blessing".
+const headerTitle = () => (state.profile ? `${D.possessive(state.profile.name)} Daily Blessing` : APP_NAME);
 
-/** Put the baby's name in the header and the page title. */
+/** Put the baby's name in the header. */
 function personalise() {
-  $('brand-name').textContent = state.profile ? appTitle() : 'Daily Blessing';
+  $('brand-name').textContent = headerTitle();
 }
 const todayUnread = () => !state.reads.has(state.today);
 
@@ -98,12 +101,13 @@ function parseRoute() {
   const hash = decodeURIComponent(location.hash.replace(/^#\/?/, ''));
   if (hash === 'journey') return { name: 'journey' };
   if (hash === 'settings') return { name: 'settings' };
+  if (hash === 'soothe') return { name: 'soothe' };
   const m = /^day\/(\d{1,5})$/.exec(hash);
   if (m) return { name: 'day', n: Number(m[1]) };
   return { name: 'today' };
 }
 
-const TITLES = { today: 'Today', journey: 'Journey', day: 'Past day', settings: 'Settings', welcome: 'Welcome' };
+const TITLES = { today: 'Today', journey: 'Journey', day: 'Past day', soothe: 'Soothe', settings: 'Settings', welcome: 'Welcome' };
 
 function showScreen(name) {
   document.body.dataset.route = name;
@@ -114,6 +118,7 @@ function showScreen(name) {
     if (tab.dataset.tab === name) tab.setAttribute('aria-current', 'page');
     else tab.removeAttribute('aria-current');
   }
+  renderSoothe({ route: name, name: state.profile ? state.profile.name : '' });
 }
 
 /**
@@ -144,7 +149,7 @@ function render({ focus = false } = {}) {
   state.route = route;
   showScreen(route.name === 'day' ? 'day' : route.name);
   personalise();
-  document.title = `${TITLES[route.name]} · ${appTitle()}`;
+  document.title = `${TITLES[route.name]} · ${APP_NAME}`;
 
   if (route.name === 'today') renderToday();
   else if (route.name === 'journey') renderJourney();
@@ -225,7 +230,7 @@ function renderWelcome() {
   const wasWelcome = document.body.dataset.route === 'welcome';
   showScreen('welcome');
   personalise();
-  document.title = 'Welcome · Newborn Daily Blessing';
+  document.title = `Welcome · ${APP_NAME}`;
   if (!wasWelcome) {
     $('welcome-step-name').hidden = false;
     $('welcome-step-reminders').hidden = true;
@@ -636,7 +641,7 @@ async function onExport() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `newborn-blessing-backup-${D.toDateString()}.json`;
+    a.download = `davina-backup-${D.toDateString()}.json`;
     document.body.append(a);
     a.click();
     a.remove();
@@ -752,6 +757,7 @@ async function registerServiceWorker() {
     return;
   }
   const reg = swRegistration;
+  if (!reg) return;
   if (reg.waiting && navigator.serviceWorker.controller) showUpdateBar(reg.waiting);
   reg.addEventListener('updatefound', () => {
     const worker = reg.installing;
@@ -849,6 +855,7 @@ function showError(message) {
 
 async function boot() {
   bindEvents();
+  initSoothe({ toast }).catch((err) => console.warn('Soothe could not start', err));
   const days = loadDays();
   days.catch(() => {}); // handled where awaited
   try {

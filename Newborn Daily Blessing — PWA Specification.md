@@ -4,7 +4,7 @@ Oct 28, 2026 · @Afayicommerce
 
 ## Overview
 
-Newborn Daily Blessing is a static, installable web app that gives a parent one Bible verse and one prayer for their baby every day of the baby's first year. It runs entirely from GitHub Pages: no server, no accounts, no running costs.
+Davina (Newborn Daily Blessing) is a static, installable web app that gives a parent one Bible verse and one prayer for their baby every day of the baby's first year. It runs entirely from GitHub Pages: no server, no accounts, no running costs.
 
 **Goals**
 
@@ -18,7 +18,7 @@ Newborn Daily Blessing is a static, installable web app that gives a parent one 
 - User accounts, cloud sync or multi-device sync.
 - Server-sent push notifications (no backend allowed).
 - Multiple babies, languages or Bible translations.
-- Audio, sharing to social media, or analytics.
+- Recorded audio, sharing to social media, or analytics. (Generated soothing sounds were added later; see Soothe.)
 
 ## Key decisions
 
@@ -31,6 +31,8 @@ Newborn Daily Blessing is a static, installable web app that gives a parent one 
 | Bible text | King James Version (KJV) | Public domain, the most familiar English translation (changed from the WEB at the owner's request) |
 | Language | English only | Agreed with the owner |
 | Hosting | GitHub Pages only, no backend | Agreed with the owner |
+| App name | **Davina** when installed, in the browser tab and on the Welcome screen; "Newborn Daily Blessing" stays as the tagline and the header keeps "Amara’s Daily Blessing" | Owner's request |
+| Soothe | Calming sounds generated on the device with Web Audio, no audio files | Works offline and has no licensing questions |
 | Stack | Plain HTML, CSS and JavaScript modules, no build step | Push to `main` and it is live; nothing to compile or maintain |
 | Storage | IndexedDB on the device | Readable by both the page and the service worker |
 
@@ -68,7 +70,20 @@ The app has five screens and a bottom bar with two tabs: **Today** and **Journey
 - Same layout as Today, with the day number and its date.
 - Button **Mark as read** on missed days; a read day shows when it was read.
 
-### 5. Settings
+### 5. Soothe
+
+A third tab, **Soothe** (moon icon), next to Today and Journey. Route `#soothe`.
+
+- One grid of six large cards: White noise, Pink noise, Brown noise, Heartbeat (70 bpm), Shush, and Lullaby (Brahms’ Lullaby, 1868, public domain, as soft music-box tones). Every sound is synthesised in JavaScript as a seamless loop; there are no audio files.
+- Tapping a card plays it (within 1 second); tapping the playing card pauses it.
+- One player bar, fixed above the bottom tabs: play/pause, title and time left, a volume slider and a sleep timer (15, 30 or 60 minutes, or no timer; 30 by default). On other tabs it shrinks to play/pause and title while a sound plays.
+- The timer fades the sound out over the last 10 seconds, then stops it. The fade is scheduled on the audio clock, so it happens on time even when the page's timers are throttled.
+- Safety: the volume starts at 30% and the output gain can never go above 70%. A one-time tip says to keep the phone at least 2 m from the baby, keep the volume low, and use the timer rather than playing all night. A short reminder stays under the grid.
+- Night screen (moon button): a black, dimmed screen showing the sound and time left; tap to show Play/Pause and Close. While it is open the app keeps the screen awake (Screen Wake Lock), so the sound keeps playing on every platform.
+- Lock screen: a silent looping audio element runs beside Web Audio so the lock screen shows the title and controls (Media Session API) and the audio session stays alive with the screen off where the platform allows (Android Chrome; iOS may pause web audio when locked, which is why the night screen exists). On iOS the app asks for the "playback" audio session so the silent switch does not mute it.
+- The last sound, volume and timer, and whether the tip was seen, are saved in the `profile` store under the key `"soothe"`.
+
+### 6. Settings
 
 - Edit baby's name (prayers update immediately, history stays).
 - Reminder time, notification permission status and a **Test notification** button.
@@ -202,6 +217,7 @@ Everything the parent creates lives in one IndexedDB database on the device, `ne
 | Store | Key | Fields |
 | --- | --- | --- |
 | `profile` | `"me"` (single record) | `name`, `birthDate`, `startDate` (Day 1), `joinedDate` (setup day), `reminderTime` (HH:MM), `createdAt` (ISO), `lastSeenDate` (dates are YYYY-MM-DD) |
+| `profile` | `"soothe"` | `sound`, `volume` (gain, 0–0.7), `timer` (minutes, 0 = none), `tipSeen` |
 | `reads` | `date` (YYYY-MM-DD) | `date`, `dayNumber`, `readAt` (ISO timestamp) |
 
 Only days that were read get a record; missed days are computed, not stored.
@@ -226,7 +242,7 @@ The app is installable and fully offline after the first visit; GitHub Pages pro
 
 ### Manifest (`manifest.webmanifest`)
 
-- `name`: "Newborn Daily Blessing", `short_name`: "Blessing".
+- `name`: "Davina", `short_name`: "Davina" (the installed app's name). `apple-mobile-web-app-title` is also "Davina".
 - `start_url`: `"./"` and `scope`: `"./"`. Relative paths so the app works under a project URL like `username.github.io/newborn-blessing/`.
 - `display`: `"standalone"`, `orientation`: `"portrait"` (desktop ignores it).
 - `background_color` and `theme_color` from the design palette.
@@ -310,6 +326,8 @@ newborn-blessing/
 │   ├── db.js               # IndexedDB helpers (shared with sw.js)
 │   ├── days.js             # date maths, day states, streak
 │   ├── reminders.js        # permission, badge, notification, periodic sync, .ics
+│   ├── sounds.js           # Soothe sound synthesis, volume cap (pure, tested in Node)
+│   ├── soothe.js           # Soothe player: Web Audio, timer, Media Session, night screen
 │   └── ui.js               # rendering Today, Journey, Past day, Settings
 ├── data/
 │   └── days.json           # 365 verses and prayers
@@ -319,7 +337,7 @@ newborn-blessing/
     └── build-days.js       # spreadsheet CSV → days.json, with checks
 ```
 
-Routing uses the URL hash (`#today`, `#journey`, `#day/12`, `#settings`) so GitHub Pages never needs server rewrites.
+Routing uses the URL hash (`#today`, `#journey`, `#day/12`, `#soothe`, `#settings`) so GitHub Pages never needs server rewrites.
 
 ### Build checklist
 
@@ -349,6 +367,8 @@ Routing uses the URL hash (`#today`, `#journey`, `#day/12`, `#settings`) so GitH
 8. Leaving the app unopened for 3 days shows exactly 3 missed days; reading one changes it to "read late" and lowers the missed count to 2.
 9. Export, Start over, then Import restores the name and history exactly.
 10. Layout has no horizontal scroll from 320 px to 1440 px wide, in light and dark mode.
+11. Soothe: sounds play within 1 second of tapping, including in airplane mode once installed; the sleep timer fades out and stops the sound; the volume never exceeds the 70% cap; it works on Android Chrome, the iPhone Home Screen app, and desktop Chrome and Edge.
+12. Installed, the app's name is "Davina".
 
 ### Test devices
 

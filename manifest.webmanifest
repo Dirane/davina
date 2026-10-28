@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Newborn Daily Blessing",
-  "short_name": "Blessing",
-  "description": "A verse and a prayer for your little one, every day of their first year.",
+  "name": "Davina",
+  "short_name": "Davina",
+  "description": "Newborn Daily Blessing: a verse and a prayer for your little one every day of their first year, and calming sounds to help them settle.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "./",

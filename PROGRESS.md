@@ -90,3 +90,21 @@ green style (warm tint stays for real missed days). Old profiles without birthDa
 - Rebuild: `node tools/build-days.js --bible $SCRATCH/kjv/vpl/eng-kjv_vpl.txt`.
 - Released as APP_VERSION 1.2.0, CACHE_VERSION blessing-v3.
 - Older notes above that mention WEB/web.js/--web describe the original build.
+
+## Change 4 (2026-10-28): App name Davina + Soothe tab  [DONE, verified in Chromium]
+- Name: manifest name/short_name, apple-mobile-web-app-title, application-name, page
+  titles ("Today · Davina"), Welcome h1 "Davina" with kicker "Newborn Daily Blessing".
+  Header keeps "Amara’s Daily Blessing" (owner: keep the "Daily Blessing" text). Backup
+  file is davina-backup-DATE.json. IndexedDB name and .ics UID unchanged (stability).
+- Soothe: js/sounds.js (pure synthesis, seeded, seamless loops; tested in Node) +
+  js/soothe.js (Web Audio graph source→sourceGain→volume(≤0.7)→fade→destination;
+  timer fade scheduled on the audio clock; silent looping <audio> blob for Media
+  Session/lock screen; navigator.audioSession='playback'; night <dialog> + wake lock).
+- Prefs in profile store key "soothe" {sound, volume, timer, tipSeen}; replaceAll no
+  longer clears the profile store (put overwrites "me"), so Import/Start again keep them.
+- CSP gained `media-src 'self' blob:` (keep-alive WAV is a blob URL).
+- Verified: start ~0.25 s, offline play, volume cap, 15 s test timer fades from 5–15 s and
+  stops (test-only patch via Playwright route), prefs survive reload, axe clean light/dark/
+  night, no overflow 320–1440. Owner to check on devices: lock screen Android/iPhone, sound
+  quality on phone speakers.
+- Released as APP_VERSION 1.3.0, CACHE_VERSION blessing-v4.

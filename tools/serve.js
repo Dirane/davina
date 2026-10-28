@@ -41,4 +41,9 @@ createServer(async (req, res) => {
     res.writeHead(err.code === 'EACCES' ? 403 : 404, { 'Content-Type': 'text/plain' });
     res.end('Not found');
   }
+}).on('error', (err) => {
+  if (err.code !== 'EADDRINUSE') throw err;
+  console.error(`Port ${PORT} is already in use, probably by another copy of this server.`);
+  console.error(`Open http://localhost:${PORT}, or use another port: npm run serve -- ${PORT + 1}`);
+  process.exit(1);
 }).listen(PORT, () => console.log(`Serving ${ROOT} on http://localhost:${PORT}`));

@@ -8,6 +8,7 @@
  *            birthDate: the baby's birthday. startDate: Day 1 of the plan (the
  *            birthday, or the day of "Start again"). joinedDate: the day the
  *            parent set the app up; unread days before it are not "missed".
+ *            key "soothe"    { sound, volume, timer, tipSeen }  (Soothe tab settings)
  *   reads    keyPath "date"  { date, dayNumber, readAt }
  */
 (function (root) {
@@ -16,6 +17,7 @@
   const DB_NAME = 'newborn-blessing';
   const DB_VERSION = 1;
   const PROFILE_KEY = 'me';
+  const SOOTHE_KEY = 'soothe';
   const BACKUP_VERSION = 1;
   const CHANNEL = 'newborn-blessing';
 
@@ -88,6 +90,20 @@
     return next;
   }
 
+  /** Soothe settings (last sound, volume, timer, tip seen), or null. */
+  async function getSoothe() {
+    const db = await open();
+    return (await result(db.transaction('profile').objectStore('profile').get(SOOTHE_KEY))) || null;
+  }
+
+  async function saveSoothe(settings) {
+    const db = await open();
+    const tx = db.transaction('profile', 'readwrite');
+    tx.objectStore('profile').put(settings, SOOTHE_KEY);
+    await done(tx);
+    return settings;
+  }
+
   async function getReads() {
     const db = await open();
     return result(db.transaction('reads').objectStore('reads').getAll());
@@ -144,13 +160,15 @@
     await done(tx);
   }
 
-  /** Replace everything in one transaction (used by Import and Start again). */
+  /**
+   * Replace the profile and reading history in one transaction (used by Import
+   * and Start again). Soothe settings are kept.
+   */
   async function replaceAll(profile, reads) {
     const db = await open();
     const tx = db.transaction(['profile', 'reads'], 'readwrite');
     const p = tx.objectStore('profile');
     const r = tx.objectStore('reads');
-    p.clear();
     r.clear();
     p.put(profile, PROFILE_KEY);
     for (const rec of reads) r.put(rec);
@@ -237,6 +255,7 @@
   root.NBDB = Object.freeze({
     DB_NAME, CHANNEL, BACKUP_VERSION,
     open, getProfile, saveProfile, updateProfile, rebaseStart, getReads, getRead, markRead,
+    getSoothe, saveSoothe,
     clearAll, replaceAll, exportBackup, validateBackup, broadcast,
   });
 })(typeof globalThis !== 'undefined' ? globalThis : self);

@@ -1,4 +1,4 @@
-# Newborn Daily Blessing — project guide
+# Davina (Newborn Daily Blessing) — project guide
 
 Static PWA (GitHub Pages, no backend, no build step). Source of truth for requirements:
 `Newborn Daily Blessing — PWA Specification.md`. Progress and decisions: `PROGRESS.md`
@@ -21,9 +21,12 @@ Static PWA (GitHub Pages, no backend, no build step). Source of truth for requir
   contain `{name}`, no gendered pronouns for the baby (he/she/him/her/his/hers).
 
 ## Layout
-- `index.html` all screens as `<section>`s; hash routes `#today #journey #day/N #settings`.
+- `index.html` all screens as `<section>`s; hash routes `#today #journey #day/N #soothe #settings`.
+- App name is **Davina** (manifest, tab title, Welcome); "Daily Blessing" wording stays in-app.
 - `js/app.js` start-up + routing; `js/ui.js` rendering; `js/reminders.js` badge,
-  notifications, periodic sync, `.ics`; `js/db.js` IndexedDB; `js/days.js` date maths.
+  notifications, periodic sync, `.ics`; `js/db.js` IndexedDB; `js/days.js` date maths;
+  `js/sounds.js` Soothe synthesis (pure); `js/soothe.js` Soothe player.
+- Soothe safety: volume is a gain capped at `MAX_GAIN` 0.7 (start 0.3); keep it that way.
 - `content/days.csv` → `node tools/build-days.js` → `data/days.json` (validated).
 - `tests/` run with `npm test` (node:test, no deps).
 

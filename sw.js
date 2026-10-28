@@ -6,7 +6,7 @@
  */
 importScripts('./js/days.js', './js/db.js');
 
-const CACHE_VERSION = 'blessing-v3';
+const CACHE_VERSION = 'blessing-v4';
 const CACHE_PREFIX = 'blessing-';
 const NOTIFICATION_TAG = 'daily-blessing';
 const PERIODIC_TAG = 'daily-blessing-check';
@@ -21,6 +21,8 @@ const PRECACHE = [
   './js/reminders.js',
   './js/days.js',
   './js/db.js',
+  './js/sounds.js',
+  './js/soothe.js',
   './data/days.json',
   './fonts/lora-400.woff2',
   './fonts/inter-400.woff2',
