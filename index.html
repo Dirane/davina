@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Newborn Daily Blessing</title>
+  <meta name="description" content="A verse and a prayer for your little one, every day of their first year.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#FBF8F3" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#161614" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icons/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon-180.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Blessing">
+  <link rel="preload" href="./fonts/lora-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./fonts/inter-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./data/days.json" as="fetch" crossorigin>
+  <link rel="stylesheet" href="./css/app.css">
+  <link rel="modulepreload" href="./js/days.js">
+  <link rel="modulepreload" href="./js/db.js">
+  <link rel="modulepreload" href="./js/reminders.js">
+  <link rel="modulepreload" href="./js/ui.js">
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body data-route="loading">
+  <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-sprout" viewBox="0 0 24 24"><path fill="currentColor" d="M11.2 21.2V13.6C7.2 13.5 4 11.4 3.6 6.6c4.4-.1 7.2 1.9 8 5 .5-4.2 3.5-7.6 8.8-7.6-.2 5.6-3.4 8.4-7.6 8.6v8.6a.8.8 0 0 1-1.6 0z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></g></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></g><g fill="currentColor"><circle cx="8.5" cy="14.5" r="1.2"/><circle cx="12" cy="14.5" r="1.2"/><circle cx="15.5" cy="14.5" r="1.2"/></g></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></g></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  </svg>
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <a class="brand" href="#today">
+        <svg class="icon brand-mark" aria-hidden="true"><use href="#i-sprout"/></svg>
+        <span>Daily Blessing</span>
+      </a>
+      <nav class="tabs" aria-label="Main">
+        <a class="tab" href="#today" data-tab="today">
+          <svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg><span>Today</span>
+        </a>
+        <a class="tab" href="#journey" data-tab="journey">
+          <svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg><span>Journey</span>
+        </a>
+      </nav>
+      <a class="icon-btn settings-link" href="#settings" data-tab="settings" aria-label="Settings">
+        <svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <section class="screen" id="screen-loading" data-screen="loading">
+      <p class="loading-text" role="status">Loading…</p>
+    </section>
+
+    <section class="screen" id="screen-error" data-screen="error" hidden aria-labelledby="error-heading">
+      <h1 id="error-heading" class="screen-title" tabindex="-1">Something went wrong</h1>
+      <p id="error-message">The app could not load today's reading.</p>
+      <button class="btn btn-primary" type="button" id="error-retry">Try again</button>
+    </section>
+
+    <!-- 1. Welcome (first open only) -->
+    <section class="screen" id="screen-welcome" data-screen="welcome" hidden>
+      <div class="welcome" id="welcome-step-name">
+        <svg class="welcome-mark" aria-hidden="true"><use href="#i-sprout"/></svg>
+        <h1 class="screen-title" tabindex="-1">Newborn Daily Blessing</h1>
+        <p class="lede">A verse and a prayer for your little one, every day of their first year.</p>
+        <form id="welcome-form" class="stack" novalidate>
+          <div class="field">
+            <label for="welcome-name">Baby's name</label>
+            <input id="welcome-name" name="name" type="text" required maxlength="30"
+                   autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="next"
+                   aria-describedby="welcome-name-error">
+            <p class="field-error" id="welcome-name-error" aria-live="polite"></p>
+          </div>
+          <div class="field">
+            <label for="welcome-time">Daily reminder time <span class="optional">(optional)</span></label>
+            <input id="welcome-time" name="time" type="time" value="07:00">
+          </div>
+          <button class="btn btn-primary" type="submit">Begin</button>
+        </form>
+        <p class="fine-print">No account needed. Everything stays on this device.</p>
+        <button class="link-button" type="button" id="welcome-restore">Restore from a backup file</button>
+        <p class="status-line" id="welcome-restore-status" aria-live="polite"></p>
+      </div>
+
+      <div class="welcome" id="welcome-step-reminders" hidden>
+        <h1 class="screen-title" tabindex="-1">Gentle daily reminders</h1>
+        <p class="lede">The app can remind you each day until you have read the day's blessing.</p>
+
+        <div class="card stack-s" id="onboard-notify">
+          <h2 class="card-title">Notifications</h2>
+          <p id="onboard-notify-text">Allow notifications so the app can nudge you until today's verse and prayer are read. You can turn this off at any time.</p>
+          <button class="btn btn-secondary" type="button" id="onboard-allow">Turn on reminders</button>
+          <p class="status-line" id="onboard-notify-status" aria-live="polite"></p>
+        </div>
+
+        <div class="card stack-s" id="onboard-calendar">
+          <h2 class="card-title">Calendar alarm <span class="pill" id="onboard-calendar-pill" hidden>Recommended</span></h2>
+          <p id="onboard-calendar-text">The most reliable reminder on every phone: a daily event in your own calendar that rings at <span data-bind="reminder-time">07:00</span>.</p>
+          <button class="btn btn-secondary" type="button" id="onboard-calendar-btn">Add daily reminder to my calendar</button>
+        </div>
+
+        <button class="btn btn-primary" type="button" id="onboard-done">Go to Day 1</button>
+      </div>
+    </section>
+
+    <!-- 2. Today (and the first-year-complete screen) -->
+    <section class="screen" id="screen-today" data-screen="today" hidden></section>
+
+    <!-- 3. Journey -->
+    <section class="screen" id="screen-journey" data-screen="journey" hidden aria-labelledby="journey-heading">
+      <h1 class="screen-title" id="journey-heading" tabindex="-1">Journey</h1>
+      <p class="summary" id="journey-summary"></p>
+      <ul class="legend" aria-label="Legend">
+        <li><span class="day day--read legend-dot" aria-hidden="true"><svg class="mark"><use href="#i-check"/></svg></span>Read</li>
+        <li><span class="day day--late legend-dot" aria-hidden="true"><svg class="mark"><use href="#i-check"/></svg></span>Read late</li>
+        <li><span class="day day--missed legend-dot" aria-hidden="true"><span class="mark mark-dot"></span></span>Missed</li>
+        <li><span class="day day--today legend-dot" aria-hidden="true"></span>Today</li>
+      </ul>
+      <div id="journey-months"></div>
+    </section>
+
+    <!-- 4. Past day -->
+    <section class="screen" id="screen-day" data-screen="day" hidden></section>
+
+    <!-- 5. Settings -->
+    <section class="screen" id="screen-settings" data-screen="settings" hidden aria-labelledby="settings-heading">
+      <h1 class="screen-title" id="settings-heading" tabindex="-1">Settings</h1>
+
+      <div class="card stack-s">
+        <h2 class="card-title">Baby's name</h2>
+        <form id="name-form" class="inline-form" novalidate>
+          <label class="visually-hidden" for="settings-name">Baby's name</label>
+          <input id="settings-name" name="name" type="text" required maxlength="30"
+                 autocomplete="off" autocapitalize="words" spellcheck="false" aria-describedby="settings-name-status">
+          <button class="btn btn-secondary btn-inline" type="submit">Save</button>
+        </form>
+        <p class="status-line" id="settings-name-status" aria-live="polite"></p>
+      </div>
+
+      <div class="card stack-s">
+        <h2 class="card-title">Reminders</h2>
+        <div class="field field-row">
+          <label for="settings-time">Reminder time</label>
+          <input id="settings-time" type="time" value="07:00" aria-describedby="settings-time-status">
+        </div>
+        <p class="status-line" id="settings-time-status" aria-live="polite"></p>
+        <div class="setting-row">
+          <span>Notifications</span>
+          <strong id="notify-status">—</strong>
+        </div>
+        <p class="hint" id="notify-help" hidden></p>
+        <div class="button-row">
+          <button class="btn btn-secondary" type="button" id="notify-enable" hidden>Turn on notifications</button>
+          <button class="btn btn-secondary" type="button" id="notify-test">Test notification</button>
+        </div>
+        <hr class="divider">
+        <p class="hint" id="calendar-hint">A daily calendar event with an alarm rings at the exact time on every device. If you change the reminder time, add it again.</p>
+        <button class="btn btn-secondary" type="button" id="calendar-btn">Add daily reminder to my calendar</button>
+      </div>
+
+      <div class="card stack-s" id="install-card" hidden>
+        <h2 class="card-title">Install app</h2>
+        <p class="hint" id="install-text">Install the app for a home-screen icon, offline use and reminders.</p>
+        <button class="btn btn-secondary" type="button" id="install-btn" hidden>Install app</button>
+        <ol class="steps" id="install-ios" hidden>
+          <li>Tap the <strong>Share</strong> button in Safari.</li>
+          <li>Choose <strong>Add to Home Screen</strong>.</li>
+          <li>Open the app from your Home Screen, then turn on notifications here.</li>
+        </ol>
+      </div>
+
+      <div class="card stack-s">
+        <h2 class="card-title">Backup</h2>
+        <p class="hint">Your reading history lives only on this device. Save a backup file to move it or keep it safe.</p>
+        <div class="button-row">
+          <button class="btn btn-secondary" type="button" id="export-btn">Export</button>
+          <button class="btn btn-secondary" type="button" id="import-btn">Import</button>
+        </div>
+        <p class="status-line" id="backup-status" aria-live="polite"></p>
+      </div>
+
+      <div class="card stack-s">
+        <h2 class="card-title">Start over</h2>
+        <p class="hint">Removes the name and all reading history from this device.</p>
+        <button class="btn btn-danger" type="button" id="reset-btn">Start over</button>
+      </div>
+
+      <p class="about">Scripture quotations are from the World English Bible (WEB), which is in the public domain. No accounts, no tracking: the name and history never leave this device. <span id="app-version"></span></p>
+    </section>
+  </main>
+
+  <div class="update-bar" id="update-bar" hidden>
+    <button type="button" id="update-btn">Update available, tap to refresh</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <input class="visually-hidden" type="file" id="import-file" accept="application/json,.json" tabindex="-1" aria-hidden="true">
+
+  <dialog class="dialog" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+    <h2 id="confirm-title">Are you sure?</h2>
+    <p id="confirm-text"></p>
+    <div class="dialog-actions">
+      <button class="btn btn-secondary" type="button" value="cancel" id="confirm-cancel">Cancel</button>
+      <button class="btn btn-danger" type="button" value="ok" id="confirm-ok">Confirm</button>
+    </div>
+  </dialog>
+</body>
+</html>
